@@ -1,0 +1,100 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 100% 10%;
+    --foreground: 168 60% 95%;
+    --card: 210 100% 13%;
+    --card-foreground: 168 60% 95%;
+    --popover: 210 100% 13%;
+    --popover-foreground: 168 60% 95%;
+    --primary: 180 100% 37%;
+    --primary-foreground: 210 100% 10%;
+    --secondary: 210 60% 20%;
+    --secondary-foreground: 168 60% 95%;
+    --muted: 210 40% 20%;
+    --muted-foreground: 210 20% 60%;
+    --accent: 180 100% 37%;
+    --accent-foreground: 210 100% 10%;
+    --destructive: 14 100% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 210 40% 20%;
+    --input: 210 40% 20%;
+    --ring: 180 100% 37%;
+    --radius: 0.75rem;
+    --sidebar-background: 210 100% 8%;
+    --sidebar-foreground: 168 60% 95%;
+    --sidebar-primary: 180 100% 37%;
+    --sidebar-primary-foreground: 210 100% 10%;
+    --sidebar-accent: 210 60% 20%;
+    --sidebar-accent-foreground: 168 60% 95%;
+    --sidebar-border: 210 40% 20%;
+    --sidebar-ring: 180 100% 37%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: hsl(210 100% 8%);
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(210 40% 25%);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(180 100% 37%);
+}
+
+/* Glass card effect */
+.glass-card {
+  background: rgba(0, 43, 82, 0.4);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(0, 191, 191, 0.1);
+}
+
+/* Glow effects */
+.glow-teal {
+  box-shadow: 0 0 20px rgba(0, 191, 191, 0.15);
+}
+.glow-teal-hover:hover {
+  box-shadow: 0 0 20px rgba(0, 191, 191, 0.4);
+}
+
+/* Mono font for data */
+.font-mono-data {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Animation utilities */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 5px rgba(0, 191, 191, 0.2); }
+  50% { box-shadow: 0 0 20px rgba(0, 191, 191, 0.4); }
+}
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}

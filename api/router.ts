@@ -13,6 +13,7 @@ import { reportRouter } from "./routers/report";
 import { aiEngineRouter } from "./routers/ai-engine";
 import { batchReviewRouter } from "./routers/batch-review";
 import { generateRouter } from "./routers/generate";
+import { chatRouter } from "./routers/chat";
 
 export const appRouter = createRouter({
   ping: publicQuery.query(() => ({ ok: true, ts: Date.now() })),
@@ -30,6 +31,7 @@ export const appRouter = createRouter({
   aiEngine: aiEngineRouter,
   batchReview: batchReviewRouter,
   generate: generateRouter,
+  chat: chatRouter,
 });
 
 export type AppRouter = typeof appRouter;

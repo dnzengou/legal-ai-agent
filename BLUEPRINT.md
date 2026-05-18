@@ -1,388 +1,213 @@
-# BLUEPRINT — Nexus Legal AI Platform
-
-> Merged architecture: **Kimi_Agent_LegalAI_Build** (full-stack web app) + **ai-legal-claude** (Claude Code skill system with deep legal expertise)
+# BLUEPRINT — Nexus Legal AI
+> Version 2.0 — Chat-First Redesign | 2026-05-18
 
 ---
 
 ## 1. What This Is
 
-**Nexus Legal** is a production-ready AI-powered legal intelligence platform.
+**Nexus Legal** is a lean, chat-first AI legal intelligence platform.
 
-- **Frontend:** React 19 + TypeScript + Tailwind CSS + shadcn/ui (40+ components)
-- **Backend:** Hono + tRPC + Drizzle ORM (MySQL)
-- **AI Layer:** Multi-provider AI engine (DeepSeek, Kimi, OpenAI, Anthropic, Gemini)
-- **UI Theme:** Deep navy (`#001A33`) + teal (`#00BFBF`) glassmorphism
-- **Auth:** Kimi OAuth 2.0 + JWT sessions
+**Core principle:** One input. Everything flows from the chat. Upload a document, type a question, get expert legal analysis instantly.
+
+- **Frontend:** React 19 + TypeScript + Vite + Tailwind CSS + shadcn/ui
+- **Backend:** Hono + tRPC + Drizzle ORM (MySQL / demo mode without DB)
+- **AI Layer:** Multi-provider engine (Anthropic, OpenAI, DeepSeek, Kimi, Gemini)
+- **UI Theme:** Deep navy `#001A33` + teal `#00BFBF` glassmorphism
+- **Auth:** Kimi OAuth 2.0 + JWT (skippable in demo mode)
 
 ---
 
-## 2. Feature Map (Merged)
+## 2. Feature Map (v2 — Lean)
 
-### From Kimi_Agent_LegalAI_Build (existing)
+### Active Routes
 
 | Route | Feature | Status |
 |-------|---------|--------|
-| `/dashboard` | Analytics, charts, quick actions | ✅ Built |
-| `/documents` | Upload, manage legal documents | ✅ Built |
-| `/contract-review` | 5-Agent safety analysis + Contract Safety Score | ✅ Built |
-| `/analysis` | 8 analysis types (NLP pipeline) | ✅ Built |
-| `/contracts` | Generate contracts from 6 templates | ✅ Built |
-| `/precedents` | Search case law with relevance scoring | ✅ Built |
-| `/judgments` | Judgment summaries + rhetoric labeling | ✅ Built |
-| `/ethics` | AI bias/fairness/transparency auditing | ✅ Built |
-| `/ai-engines` | Multi-model AI engine configuration | ✅ Built |
-| `/settings` | User preferences | ✅ Built |
+| `/` | Landing page | ✅ |
+| `/login` | Kimi OAuth login | ✅ |
+| `/chat` | **Chat-first interface — primary experience** | ✅ NEW |
+| `/dashboard` | Analytics overview, quick metrics | ✅ Simplified |
+| `/documents` | Upload, manage legal documents | ✅ |
+| `/review` | 5-Agent contract safety analysis + score | ✅ Enhanced |
+| `/batch-review` | 2–10 contracts in parallel | ✅ |
+| `/generate` | NDA / Terms / Privacy / Agreement generator | ✅ |
+| `/settings` | AI engine config + user preferences (merged) | ✅ Merged |
 
-### From ai-legal-claude (new additions)
-
-| Route | Feature | Status |
-|-------|---------|--------|
-| `/batch-review` | Review 2-10 contracts simultaneously in parallel | ✅ Added |
-| `/generate` | Generate NDA / Terms / Privacy / Agreement / SOW | ✅ Added |
-| `/negotiate` | Counter-proposal generator + negotiation email | ✅ Added |
-| `/compliance` | GDPR/CCPA/ADA/PCI/CAN-SPAM gap audit | Planned |
+### Removed (low value, redundant)
+| Route | Reason |
+|-------|--------|
+| `/analysis` | Superseded by `/chat` + `/review` |
+| `/contracts` | Superseded by `/generate` |
+| `/precedents` | Niche, low daily usage |
+| `/judgments` | Niche, low daily usage |
+| `/ethics` | Niche, low daily usage |
+| `/ai-engines` | Merged into `/settings` |
 
 ---
 
-## 3. Architecture Diagram
+## 3. Chat-First Architecture
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    NEXUS LEGAL                          │
-│                  nexuslegal.vercel.app                  │
-└─────────────────────────────────────────────────────────┘
-         │                              │
-  ┌──────▼──────┐              ┌────────▼────────┐
-  │   Frontend  │              │   API (Hono)    │
-  │  React 19   │◄────tRPC────►│ /api/trpc/*     │
-  │  Vite SSG   │              └────────┬────────┘
-  └─────────────┘                       │
-                            ┌───────────┼───────────┐
-                            │           │           │
-                    ┌───────▼──┐ ┌──────▼────┐ ┌───▼──────────┐
-                    │ contract │ │  batch-   │ │   generate   │
-                    │  review  │ │  review   │ │   (NDA etc.) │
-                    │ (5-agent)│ │(N-agent)  │ │              │
-                    └───────┬──┘ └──────┬────┘ └───┬──────────┘
-                            │           │           │
-                    ┌───────▼───────────▼───────────▼──────────┐
-                    │            AI Engine Layer               │
-                    │  DeepSeek · Kimi · OpenAI · Anthropic    │
-                    │  (via configurable API keys in DB)       │
-                    └──────────────────┬───────────────────────┘
-                                       │
-                    ┌──────────────────▼───────────────────────┐
-                    │              MySQL (PlanetScale)         │
-                    │  users · documents · contractReviews ·   │
-                    │  analyses · precedents · judgments ·     │
-                    │  ethicalReviews · reports · activityLog  │
-                    └──────────────────────────────────────────┘
+User opens /chat
+  │
+  ├─ Empty state: 6 quick-action cards
+  │   [Review Contract] [Generate NDA] [Check Compliance]
+  │   [Identify Risks]  [Plain English] [Draft Counter-Proposal]
+  │
+  ├─ User uploads document (drag-drop or click)
+  │   → Text extracted, stored in conversation context
+  │   → Chip shown above input: 📄 contract.pdf (2,400 words)
+  │
+  ├─ User types message (or clicks quick action)
+  │
+  ├─ Intent detection:
+  │   review/analyze  → runContractReview() → Safety Score + full report
+  │   generate/draft  → runDocumentGenerator()
+  │   risk/danger     → runRiskExtractor()
+  │   compliance/gdpr → runComplianceCheck()
+  │   explain/plain   → runPlainEnglish()
+  │   negotiate/counter → runNegotiationStrategy()
+  │   general         → runLegalQA()
+  │
+  └─ Response streams in, formatted with markdown sections
+       → Actions offered: [Copy] [Download .md] [Open in Review]
 ```
 
 ---
 
-## 4. CoT Multi-Agent Pipeline (Enhanced)
-
-### 4.1 Contract Review — 5 Parallel Agents
+## 4. CoT Multi-Agent Pipeline (Contract Review)
 
 ```
-Input: Contract text
+Input: Contract text (via chat upload or /review page)
   │
-  ├─ Agent 1 [20%]: Clause Analyst
-  │    Identifies 20+ clause types, completeness score 1-5,
-  │    cross-reference map, gap analysis, defined terms registry
+  ├─ [20%] Clause Analyst      → 20 clause types, completeness, gap map
+  ├─ [25%] Risk Assessor       → 10 risk categories, weighted score formula
+  ├─ [20%] Compliance Checker  → GDPR Art.28, CCPA, IRS 20-Factor, state laws
+  ├─ [15%] Terms Mapper        → Obligation taxonomy, financial exposure
+  └─ [20%] Recommendations     → P0–P4 priorities, negotiation scripts
   │
-  ├─ Agent 2 [25%]: Risk Assessor  ← HIGHEST WEIGHT
-  │    10 risk categories: Financial Exposure, Liability Transfer,
-  │    Restrictive Covenants, Unclear Terms, Missing Protections,
-  │    One-Sided Terms, Unlimited Liability, Broad Indemnification,
-  │    Auto-Renewal Traps, Non-Compete Overreach
-  │    Poison pill detection: buried boilerplate, cross-reference chains,
-  │    definition manipulation, incorporation by reference
-  │    Score = (Severity×0.40) + (Likelihood×0.25) + (Financial×0.20) + (Asymmetry×0.15)
-  │
-  ├─ Agent 3 [20%]: Compliance Checker
-  │    GDPR Art.28, CCPA/CPRA, State non-compete law (50 states),
-  │    IRS 20-factor contractor test, ABC test, usury laws,
-  │    consumer protection, HIPAA/GLBA/FERPA flags
-  │
-  ├─ Agent 4 [15%]: Terms & Obligations Mapper
-  │    Obligation taxonomy: PERF/PAY/NOTC/APPR/RPT/INS/COMP/REST/COND/SURV
-  │    Financial exposure: guaranteed + contingent + uncapped + consequential
-  │    Auto-renewal trap detection, deadline calendar, payment schedule
-  │
-  └─ Agent 5 [20%]: Recommendations Engine
-       Priority tiers: P0 Dealbreaker → P4 Cosmetic
-       8 action types: REP/MOD/ADD/DEL/CO/CAP/MUT/CLR
-       Negotiation scripts: Opening → Justification → Fallback → Trade-off → Walk-away
-       Concession strategy matrix
-  │
-  └─▶ Contract Safety Score (0-100) + Grade (A+/A/B/C/D/F)
-       → CONTRACT-REVIEW Report
-       → PDF Export (ReportLab score gauge + risk bar chart)
+  └─▶ Contract Safety Score (0–100) + Grade (A+/A/B/C/D/F)
 ```
 
-### 4.2 Batch Review — N Parallel Agents
+**Risk formula:** `Score = (Severity×0.40) + (Likelihood×0.25) + (Financial×0.20) + (Asymmetry×0.15)`
 
-```
-Input: N contract files (2-10)
-  │
-  ├─ Agent 1 → Contract 1 rapid assessment
-  ├─ Agent 2 → Contract 2 rapid assessment
-  ├─ Agent N → Contract N rapid assessment
-  │   (all fire simultaneously)
-  │
-  └─▶ Comparative risk table ranked by Safety Score
-       Cross-contract pattern analysis
-       Recommended action order
-```
-
-### 4.3 Document Generation Pipeline
-
-```
-Input: type + user-provided parameters
-  │
-  ├─ NDA Generator: mutual/one-way/employee/vendor
-  │   15 sections + plain English annotations
-  │
-  ├─ Terms of Service: GDPR/CCPA compliant, 18 sections
-  │
-  ├─ Privacy Policy: scans actual data collection practices
-  │
-  ├─ Service Agreement: MSA/SOW/freelancer/partnership
-  │
-  └─▶ Markdown document with legal annotations
-       → Available for PDF export
-```
+**Safety score deductions:**
+- Critical risk (9–10): −12 pts each
+- High risk (7–8): −8 pts each
+- Medium risk (4–6): −3 to −5 pts each
+- Missing IP clause: −7 | Missing data protection: −8 | No liability cap: −10
 
 ---
 
-## 5. Database Schema
+## 5. Database Schema (unchanged)
 
 ```
-users              ← Kimi OAuth users
-aiEngines          ← Multi-provider AI config (DeepSeek/Kimi/OpenAI/Anthropic)
-documents          ← Legal docs (contract/judgment/statute/brief/nda/terms/privacy)
-contractReviews    ← 5-agent results: clauseAnalysis/riskAssessment/complianceFlags/
-                     obligationsMap/recommendations/plainEnglish/negotiationStrategy/
-                     missingProtections + safetyScore + letterGrade
-analyses           ← All analysis types (14 types)
-precedents         ← Case law with relevance scoring
-statutes           ← Legal statutes by jurisdiction
-judgments          ← Judicial opinions with rhetoric labels
-ethicalReviews     ← Bias/fairness/transparency/privacy scores
-reports            ← Exportable reports (PDF references)
+users              ← OAuth users
+aiEngines          ← Multi-provider config
+documents          ← Legal docs (contract/nda/terms/privacy/other)
+contractReviews    ← 5-agent results + safetyScore + letterGrade
+analyses           ← All analysis results
+precedents         ← Case law (retained, not exposed in UI v2)
+statutes           ← Statutes (retained, not exposed in UI v2)
+judgments          ← Judgments (retained, not exposed in UI v2)
+ethicalReviews     ← Ethics (retained, not exposed in UI v2)
+reports            ← Exportable reports
 activityLog        ← User action audit trail
 ```
 
----
-
-## 6. Enhanced Scoring Logic
-
-### Contract Safety Score Formula
-```
-Start at 100 points.
-
-High-risk clauses (score 7-10):
-  - Critical (9-10): -12 points each
-  - High (7-8):      -8 points each
-
-Medium-risk clauses (score 4-6):
-  - Upper (6):   -5 points each  
-  - Middle (5):  -4 points each
-  - Lower (4):   -3 points each
-
-Missing critical protections:
-  - No liability cap:      -10 points
-  - No data protection:    -8 points
-  - No IP clause:          -7 points
-  - No force majeure:      -5 points
-  - No dispute resolution: -5 points
-
-Compliance failures:
-  - FAIL (void clause):    -8 points each
-  - WARNING:               -3 points each
-
-Floor: 0. Ceiling: 100.
-
-Grade: A+ (90-100) | A (80-89) | B (70-79) | C (60-69) | D (40-59) | F (0-39)
-```
-
-### Risk Score Per Clause
-```
-Score = (Severity × 0.40) + (Likelihood × 0.25) + (Financial_Exposure × 0.20) + (Asymmetry × 0.15)
-
-Severity (1-10): Worst-case outcome
-Likelihood (1-10): Probability of trigger
-Financial_Exposure (1-10): 
-  1-2 = <$10K | 3-4 = $10-50K | 5-6 = $50-250K | 7-8 = $250K-1M | 9-10 = >$1M/uncapped
-Asymmetry (1-10): How one-sided is this clause
-
-Round up when exposure is uncapped.
-```
+*Retained tables not shown in UI allow future re-enable without migration.*
 
 ---
 
-## 7. Files Created / Modified in This Session
+## 6. Best-In-Class Patterns Adopted
 
-### New Files
+| Pattern | Source inspiration | Implementation |
+|---------|-------------------|----------------|
+| Chat-first with doc context | Claude.ai, Harvey AI | `/chat` page — primary UX |
+| Document pill in input | Claude.ai | Chip shown when doc attached |
+| Conversation history sidebar | Claude.ai, ChatGPT | Left panel with recent chats |
+| Suggested prompts empty state | Claude.ai | 6 quick-action cards |
+| Streaming response feel | Claude.ai, Perplexity | Typewriter animation |
+| Safety score gauge | Credit score apps | Circular SVG gauge 0–100 |
+| Single settings page | Linear, Vercel | Merged AI engines + prefs |
+| Mobile-first collapsible nav | Linear | Slide-over drawer on mobile |
+
+---
+
+## 7. Files Created / Modified
+
+### v1 (initial build)
 | File | Purpose |
 |------|---------|
-| `BLUEPRINT.md` | This document |
+| `api/routers/contract-review.ts` | 5-agent pipeline (rewritten) |
 | `api/routers/batch-review.ts` | Parallel multi-contract analysis |
 | `api/routers/generate.ts` | NDA/Terms/Privacy/Agreement generator |
-| `api/routers/negotiate.ts` | Counter-proposal + negotiation strategy |
 | `src/pages/BatchReview.tsx` | Batch review UI |
 | `src/pages/Generate.tsx` | Document generation UI |
-| `vercel.json` | Vercel deployment configuration |
+| `api/index.ts` | Vercel serverless entry point |
+| `vercel.json` | Vercel deployment config |
 
-### Modified Files
+### v2 (chat-first redesign)
 | File | Change |
 |------|--------|
-| `api/routers/contract-review.ts` | Upgraded scoring, 10 risk categories, poison pill detection |
-| `api/router.ts` | Added batchReview + generate + negotiate routers |
-| `src/App.tsx` | Added /batch-review and /generate routes |
-| `src/components/AppLayout.tsx` | Added Batch Review + Generate nav items |
+| `api/routers/chat.ts` | NEW — intent-aware response engine |
+| `src/pages/Chat.tsx` | NEW — chat-first interface with doc upload |
+| `src/components/AppLayout.tsx` | Slimmed to 6 nav items |
+| `src/App.tsx` | Updated routes |
+| `api/router.ts` | Added chat router |
+| `BLUEPRINT.md` | This file — updated |
 
 ---
 
 ## 8. Deployment
 
-### Option A: Vercel (Recommended — Frontend + Serverless API)
+### Vercel (live)
+- **GitHub:** https://github.com/dnzengou/legal-ai-agent
+- **Production:** https://legal-ai-agent-fawn.vercel.app
+- **Account:** dnzengou (desire.yavro@gmail.com)
 
-**Prerequisites:**
-- GitHub account + repo
-- Vercel account (free tier works)
-- Database: PlanetScale (MySQL, free tier) or Neon (PostgreSQL — requires schema change) or Railway (MySQL)
-
-**Steps:**
-```bash
-# 1. Push to GitHub
-git init
-git add .
-git commit -m "feat: Nexus Legal AI Platform — initial production build"
-git remote add origin https://github.com/YOUR_USER/nexus-legal.git
-git push -u origin main
-
-# 2. Connect to Vercel
-# - Go to vercel.com → New Project → Import from GitHub
-# - Select your repo
-# - Framework: Vite
-
-# 3. Set Environment Variables in Vercel dashboard:
-APP_ID=your_app_id
-APP_SECRET=your_secret_32chars_min
-DATABASE_URL=mysql://user:pass@host/db
-VITE_KIMI_AUTH_URL=https://auth.moonshot.cn
-VITE_APP_ID=your_kimi_app_id
+### Environment Variables (Vercel dashboard)
+```
+DATABASE_URL=mysql://...         # PlanetScale/Railway — leave blank for demo mode
+APP_SECRET=<32+ chars>
 KIMI_AUTH_URL=https://auth.moonshot.cn
 KIMI_OPEN_URL=https://api.moonshot.cn
-OWNER_UNION_ID=your_kimi_union_id
-
-# 4. Database setup
-npm run db:push   # Push schema to PlanetScale
-
-# 5. Deploy
-# Vercel auto-deploys on every push to main
+APP_ID=<kimi app id>
+OWNER_UNION_ID=<kimi union id>
 ```
 
-**vercel.json** configures:
-- Build command: `npm run build`
-- Output: `dist/public`
-- API routes: `/api/*` → Hono serverless handler
-
-### Option B: Railway (Full-stack including MySQL)
-
-```bash
-# Railway gives you MySQL + Node.js in one platform
-# 1. Create project on railway.app
-# 2. Add MySQL plugin → copy DATABASE_URL
-# 3. Deploy via GitHub integration
-# 4. Set all env vars in Railway dashboard
-```
-
-### Option C: Netlify (Frontend) + Separate API
-
-```bash
-# Netlify for static frontend, separate API host (Railway/Render/Fly.io)
-netlify.toml:
-  [build]
-    command = "npm run build"
-    publish = "dist/public"
-  [[redirects]]
-    from = "/*"
-    to = "/index.html"
-    status = 200
-```
-
----
-
-## 9. Demo Mode (No Database Required)
-
-If `DATABASE_URL` is not set, the app runs in **demo mode**:
-- Contract review uses simulated data
-- No authentication required
+### Demo Mode
+When `DATABASE_URL` is unset:
+- Auth skipped — app opens directly
+- All analysis uses simulated data
 - Documents stored in-memory (reset on restart)
-- All 5-agent analysis results are synthetic but realistic
-
-To enable demo mode, leave `DATABASE_URL` blank in env.
+- Full UI functional for evaluation
 
 ---
 
-## 10. Planned Extensions
-
-| Feature | Description | Effort |
-|---------|-------------|--------|
-| Real AI calls | Route agent calls to actual Kimi/DeepSeek API | Medium |
-| PDF export (browser) | Client-side PDF via pdfmake or pdf-lib | Low |
-| Document OCR | Extract text from uploaded PDFs via pdfjs | Medium |
-| Compliance audit page | GDPR/CCPA/ADA website scanner | Medium |
-| Email integration | Send negotiation email directly from the platform | Low |
-| Audit trail export | Export activity log as CSV/PDF | Low |
-| Team workspaces | Multi-user shared document library | High |
-| Webhook events | Trigger on analysis complete | Medium |
-
----
-
-## 11. Key Design Decisions
-
-1. **tRPC over REST** — End-to-end type safety between frontend and backend. No API schema maintenance.
-
-2. **Drizzle ORM** — Lightweight, type-safe SQL. Migrations via `npm run db:generate`.
-
-3. **Agents as functions** — Currently synchronous functions (no real LLM calls). Designed for drop-in replacement with actual AI API calls when API keys are configured.
-
-4. **Glassmorphism theme** — Navy/teal/dark palette chosen for professional legal UX. Not "fun AI" — serious tool aesthetic.
-
-5. **Safety Score before signing** — Core UX principle: every contract gets a 0-100 score before the user makes a decision. Inspired by credit scores — immediately actionable.
-
-6. **No vendor lock-in** — AI engine table lets users bring their own API keys for any provider. Multi-model support built-in.
-
----
-
-## 12. Quick Start (Local Dev)
+## 9. Quick Start (Local)
 
 ```bash
 cd Kimi_Agent_LegalAI_Build
-
-# Install
 npm install
-
-# Configure env
-cp .env.example .env
-# Edit .env with your values
-
-# Database
-npm run db:push
-
-# Dev server (localhost:3000)
-npm run dev
-
-# Production build
-npm run build
-npm start
+cp .env.example .env   # leave DATABASE_URL blank for demo
+npm run dev            # http://localhost:3000
 ```
 
 ---
 
-*Blueprint generated: 2026-05-18 | Nexus Legal v1.0*
+## 10. Planned Extensions (v3)
+
+| Feature | Effort | Priority |
+|---------|--------|----------|
+| Real AI calls (Anthropic/OpenAI) | Medium | High |
+| PDF text extraction (pdfjs-dist) | Medium | High |
+| Streaming API responses | Medium | High |
+| Conversation persistence (DB) | Medium | Medium |
+| PDF export from chat | Low | Medium |
+| Custom AI engine per chat | Low | Low |
+| Team workspaces | High | Low |
+
+---
+
+*Nexus Legal v2.0 — 2026-05-18*

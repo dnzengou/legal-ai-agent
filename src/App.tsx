@@ -10,15 +10,10 @@ import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import { Toaster } from "@/components/ui/sonner";
 
+const Chat = lazy(() => import("./pages/Chat"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Documents = lazy(() => import("./pages/Documents"));
 const ContractReview = lazy(() => import("./pages/ContractReview"));
-const Analysis = lazy(() => import("./pages/Analysis"));
-const Contracts = lazy(() => import("./pages/Contracts"));
-const Precedents = lazy(() => import("./pages/Precedents"));
-const Judgments = lazy(() => import("./pages/Judgments"));
-const Ethics = lazy(() => import("./pages/Ethics"));
-const AiEngines = lazy(() => import("./pages/AiEngines"));
 const Settings = lazy(() => import("./pages/Settings"));
 const BatchReview = lazy(() => import("./pages/BatchReview"));
 const Generate = lazy(() => import("./pages/Generate"));
@@ -53,18 +48,14 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/chat" element={<AppLayoutWrapper><Chat /></AppLayoutWrapper>} />
         <Route path="/dashboard" element={<AppLayoutWrapper><Dashboard /></AppLayoutWrapper>} />
         <Route path="/documents" element={<AppLayoutWrapper><Documents /></AppLayoutWrapper>} />
+        <Route path="/review" element={<AppLayoutWrapper><ContractReview /></AppLayoutWrapper>} />
         <Route path="/contract-review" element={<AppLayoutWrapper><ContractReview /></AppLayoutWrapper>} />
-        <Route path="/analysis" element={<AppLayoutWrapper><Analysis /></AppLayoutWrapper>} />
-        <Route path="/contracts" element={<AppLayoutWrapper><Contracts /></AppLayoutWrapper>} />
-        <Route path="/precedents" element={<AppLayoutWrapper><Precedents /></AppLayoutWrapper>} />
-        <Route path="/judgments" element={<AppLayoutWrapper><Judgments /></AppLayoutWrapper>} />
-        <Route path="/ethics" element={<AppLayoutWrapper><Ethics /></AppLayoutWrapper>} />
-        <Route path="/ai-engines" element={<AppLayoutWrapper><AiEngines /></AppLayoutWrapper>} />
-        <Route path="/settings" element={<AppLayoutWrapper><Settings /></AppLayoutWrapper>} />
         <Route path="/batch-review" element={<AppLayoutWrapper><BatchReview /></AppLayoutWrapper>} />
         <Route path="/generate" element={<AppLayoutWrapper><Generate /></AppLayoutWrapper>} />
+        <Route path="/settings" element={<AppLayoutWrapper><Settings /></AppLayoutWrapper>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       <Toaster position="bottom-right" toastOptions={{ style: { background: "#002B52", border: "1px solid rgba(0,191,191,0.2)", color: "#E0F2F1" } }} />

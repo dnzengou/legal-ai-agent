@@ -2,23 +2,17 @@ import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { useAuth } from "@/hooks/useAuth";
 import {
-  LayoutDashboard, FileText, Brain, FileSignature, Search,
-  Gavel, ShieldCheck, Settings, LogOut, ChevronLeft, ChevronRight,
-  Menu, X, Scale, Shield, Cpu, Layers, Wand2,
+  LayoutDashboard, FileText, Settings, LogOut, ChevronLeft, ChevronRight,
+  Menu, X, Scale, Shield, Layers, Wand2, MessageSquare,
 } from "lucide-react";
 
 const navItems = [
+  { path: "/chat", icon: MessageSquare, label: "Chat" },
   { path: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { path: "/documents", icon: FileText, label: "Documents" },
-  { path: "/contract-review", icon: Shield, label: "Contract Review" },
+  { path: "/review", icon: Shield, label: "Review" },
   { path: "/batch-review", icon: Layers, label: "Batch Review" },
   { path: "/generate", icon: Wand2, label: "Generate" },
-  { path: "/analysis", icon: Brain, label: "AI Analysis" },
-  { path: "/contracts", icon: FileSignature, label: "Contracts" },
-  { path: "/precedents", icon: Search, label: "Precedents" },
-  { path: "/judgments", icon: Gavel, label: "Judgments" },
-  { path: "/ethics", icon: ShieldCheck, label: "Ethics" },
-  { path: "/ai-engines", icon: Cpu, label: "AI Engines" },
   { path: "/settings", icon: Settings, label: "Settings" },
 ];
 

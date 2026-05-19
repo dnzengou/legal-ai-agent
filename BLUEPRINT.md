@@ -1,174 +1,301 @@
-# BLUEPRINT — Nexus Legal AI
-> Version 2.0 — Chat-First Redesign | 2026-05-18
+# Nexus Legal — Blueprint v3.0
+
+> "ChatGPT for Legal Work" — lean, chat-first, installable AI legal platform.
+> Last updated: 2026-05-19
 
 ---
 
-## 1. What This Is
+## 1. Vision
 
-**Nexus Legal** is a lean, chat-first AI legal intelligence platform.
+A single-screen experience where lawyers, founders, and freelancers drop a contract and get instant, structured legal analysis. No navigation overhead. Just: upload → ask → act.
 
-**Core principle:** One input. Everything flows from the chat. Upload a document, type a question, get expert legal analysis instantly.
-
-- **Frontend:** React 19 + TypeScript + Vite + Tailwind CSS + shadcn/ui
-- **Backend:** Hono + tRPC + Drizzle ORM (MySQL / demo mode without DB)
-- **AI Layer:** Multi-provider engine (Anthropic, OpenAI, DeepSeek, Kimi, Gemini)
-- **UI Theme:** Deep navy `#001A33` + teal `#00BFBF` glassmorphism
-- **Auth:** Kimi OAuth 2.0 + JWT (skippable in demo mode)
+Inspired by Harvey AI (depth of analysis), Claude.ai (UX simplicity), and Perplexity (cited, structured answers).
 
 ---
 
-## 2. Feature Map (v2 — Lean)
+## 2. Stack
 
-### Active Routes
-
-| Route | Feature | Status |
-|-------|---------|--------|
-| `/` | Landing page | ✅ |
-| `/login` | Kimi OAuth login | ✅ |
-| `/chat` | **Chat-first interface — primary experience** | ✅ NEW |
-| `/dashboard` | Analytics overview, quick metrics | ✅ Simplified |
-| `/documents` | Upload, manage legal documents | ✅ |
-| `/review` | 5-Agent contract safety analysis + score | ✅ Enhanced |
-| `/batch-review` | 2–10 contracts in parallel | ✅ |
-| `/generate` | NDA / Terms / Privacy / Agreement generator | ✅ |
-| `/settings` | AI engine config + user preferences (merged) | ✅ Merged |
-
-### Removed (low value, redundant)
-| Route | Reason |
-|-------|--------|
-| `/analysis` | Superseded by `/chat` + `/review` |
-| `/contracts` | Superseded by `/generate` |
-| `/precedents` | Niche, low daily usage |
-| `/judgments` | Niche, low daily usage |
-| `/ethics` | Niche, low daily usage |
-| `/ai-engines` | Merged into `/settings` |
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React 19 + TypeScript + Vite 7 |
+| Styling | Tailwind CSS v3 + shadcn/ui + HSL design tokens |
+| Routing | React Router v7 (nested routes) |
+| State | TanStack Query v5 + tRPC v11 |
+| Backend | Hono v4 (serverless-ready) |
+| API | tRPC routers (end-to-end type safety) |
+| Database | Drizzle ORM + MySQL (optional — demo mode when absent) |
+| Auth | Kimi OAuth 2.0 + JWT (skippable in demo) |
+| Deploy | Vercel (Vite frontend + Hono serverless API) |
+| PWA | vite-plugin-pwa + Workbox (offline, installable on mobile/desktop) |
 
 ---
 
-## 3. Chat-First Architecture
+## 3. Architecture
 
 ```
-User opens /chat
-  │
-  ├─ Empty state: 6 quick-action cards
-  │   [Review Contract] [Generate NDA] [Check Compliance]
-  │   [Identify Risks]  [Plain English] [Draft Counter-Proposal]
-  │
-  ├─ User uploads document (drag-drop or click)
-  │   → Text extracted, stored in conversation context
-  │   → Chip shown above input: 📄 contract.pdf (2,400 words)
-  │
-  ├─ User types message (or clicks quick action)
-  │
-  ├─ Intent detection:
-  │   review/analyze  → runContractReview() → Safety Score + full report
-  │   generate/draft  → runDocumentGenerator()
-  │   risk/danger     → runRiskExtractor()
-  │   compliance/gdpr → runComplianceCheck()
-  │   explain/plain   → runPlainEnglish()
-  │   negotiate/counter → runNegotiationStrategy()
-  │   general         → runLegalQA()
-  │
-  └─ Response streams in, formatted with markdown sections
-       → Actions offered: [Copy] [Download .md] [Open in Review]
+src/
+├── pages/
+│   ├── Chat.tsx          ← PRIMARY (route: "/")
+│   ├── Documents.tsx     ← Document library
+│   └── Settings.tsx      ← Config + API keys
+├── components/
+│   ├── AppLayout.tsx     ← 3-item nav: Chat / Documents / Settings
+│   ├── NeuralBackground.tsx
+│   └── ErrorBoundary.tsx
+├── providers/
+│   └── trpc.tsx          ← tRPC client + QueryClient
+└── index.css             ← HSL design tokens + animations
+
+api/
+├── routers/
+│   ├── chat.ts           ← Intent engine + 11 response generators
+│   ├── document.ts       ← Upload, list, delete
+│   ├── contract-review.ts ← 5-agent CoT pipeline
+│   ├── batch-review.ts   ← N-parallel assessment
+│   └── generate.ts       ← NDA / Terms / Privacy / Agreement generators
+├── router.ts             ← tRPC app router (all routers merged)
+├── boot.ts               ← Hono Node.js server (dev)
+└── index.ts              ← Vercel serverless entry (export default app.fetch)
+
+db/
+├── schema.ts             ← Drizzle schema
+└── index.ts              ← MySQL connection pool
+
+public/
+├── manifest.webmanifest  ← PWA manifest
+└── icons/                ← 192×192, 512×512 PNG app icons
 ```
 
 ---
 
-## 4. CoT Multi-Agent Pipeline (Contract Review)
+## 4. Routes (v3 — simplified)
 
 ```
-Input: Contract text (via chat upload or /review page)
-  │
-  ├─ [20%] Clause Analyst      → 20 clause types, completeness, gap map
-  ├─ [25%] Risk Assessor       → 10 risk categories, weighted score formula
-  ├─ [20%] Compliance Checker  → GDPR Art.28, CCPA, IRS 20-Factor, state laws
-  ├─ [15%] Terms Mapper        → Obligation taxonomy, financial exposure
-  └─ [20%] Recommendations     → P0–P4 priorities, negotiation scripts
-  │
-  └─▶ Contract Safety Score (0–100) + Grade (A+/A/B/C/D/F)
+/          → Chat (primary experience)
+/documents → Document library
+/settings  → Settings
+/login     → Auth (Kimi OAuth)
+/landing   → Marketing page
+*          → NotFound
 ```
 
-**Risk formula:** `Score = (Severity×0.40) + (Likelihood×0.25) + (Financial×0.20) + (Asymmetry×0.15)`
-
-**Safety score deductions:**
-- Critical risk (9–10): −12 pts each
-- High risk (7–8): −8 pts each
-- Medium risk (4–6): −3 to −5 pts each
-- Missing IP clause: −7 | Missing data protection: −8 | No liability cap: −10
+Removed (low value, superseded by Chat): `/dashboard`, `/review`, `/batch-review`, `/generate`, `/analysis`, `/precedents`, `/judgments`, `/ethics`, `/ai-engines`
 
 ---
 
-## 5. Database Schema (unchanged)
+## 5. Chat — Core Feature
+
+### Intent Detection (11 intents)
 
 ```
-users              ← OAuth users
-aiEngines          ← Multi-provider config
-documents          ← Legal docs (contract/nda/terms/privacy/other)
-contractReviews    ← 5-agent results + safetyScore + letterGrade
-analyses           ← All analysis results
-precedents         ← Case law (retained, not exposed in UI v2)
-statutes           ← Statutes (retained, not exposed in UI v2)
-judgments          ← Judgments (retained, not exposed in UI v2)
-ethicalReviews     ← Ethics (retained, not exposed in UI v2)
-reports            ← Exportable reports
-activityLog        ← User action audit trail
+User message → detectIntent() → buildResponse()
+
+review           → "review this contract", "analyze this agreement"
+risk             → "what are the risks", "red flags"
+compliance       → "GDPR compliant?", "CCPA", "HIPAA"
+plain            → "explain in plain English", "summarize"
+negotiate        → "counter-proposals", "negotiate", "modify"
+missing          → "what protections am I missing?", "gaps"
+generate_nda     → "draft a mutual NDA"
+generate_terms   → "create Terms of Service", "TOS"
+generate_privacy → "write a privacy policy", "GDPR policy"
+generate_agreement → "generate a service agreement", "MSA"
+general          → definitions, help, anything else
 ```
 
-*Retained tables not shown in UI allow future re-enable without migration.*
+### 5-Agent CoT Pipeline (contract review)
+
+```
+Phase 1: Ingest + classify (contract / NDA / ToS / privacy / other)
+Phase 2: 5 agents IN PARALLEL
+  [20%] Clause Analyst     → 20 clause types, completeness score
+  [25%] Risk Assessor      → weighted formula per clause
+  [20%] Compliance Checker → GDPR / CCPA / IRS / state laws
+  [15%] Terms Mapper       → obligations + deadlines timeline
+  [20%] Recommendations    → P0–P4 priorities, fix language
+Phase 3: Aggregate → Safety Score (0–100) + Grade (A–F)
+```
+
+### Analysis Type Selector (chat header dropdown)
+
+| Mode | What it does |
+|------|-------------|
+| Contract Review | Full 5-agent analysis + safety score |
+| Risk Assessment | Clause-by-clause risk scoring |
+| Compliance Check | GDPR / CCPA / IRS / state law gaps |
+| Plain English | Legalese → readable summary |
+| Negotiate | Counter-proposals + email template |
+| Missing Protections | Gap finder |
+
+### In-Chat Features
+
+- **Drag & drop + click** file upload (PDF, TXT, DOCX)
+- **Document selector** — switch active document in header
+- **Typewriter streaming effect** — adaptive-speed rendering
+- **AnalysisCard** — animated SVG score gauge, risk breakdown, clause list
+- **Citation rendering** — BookOpen icon cards for references
+- **Copy + Download** per message (markdown)
+- **Session URL** — `?s=sessionId` shareable link
+- **Typing indicator** — 3 bouncing dots
+- **Empty state** — 6 quick-action cards
 
 ---
 
-## 6. Best-In-Class Patterns Adopted
+## 6. Design System
 
-| Pattern | Source inspiration | Implementation |
-|---------|-------------------|----------------|
-| Chat-first with doc context | Claude.ai, Harvey AI | `/chat` page — primary UX |
-| Document pill in input | Claude.ai | Chip shown when doc attached |
-| Conversation history sidebar | Claude.ai, ChatGPT | Left panel with recent chats |
-| Suggested prompts empty state | Claude.ai | 6 quick-action cards |
-| Streaming response feel | Claude.ai, Perplexity | Typewriter animation |
-| Safety score gauge | Credit score apps | Circular SVG gauge 0–100 |
-| Single settings page | Linear, Vercel | Merged AI engines + prefs |
-| Mobile-first collapsible nav | Linear | Slide-over drawer on mobile |
+### Color Tokens (CSS custom properties, HSL)
+
+```css
+--background:      220 25% 5%    /* #080f1a  near-black navy */
+--card:            220 30% 8%    /* #0d1829  card bg */
+--primary:         180 100% 37%  /* #00BFBF  teal accent */
+--primary-fg:      220 25% 5%    /* dark text on teal */
+--foreground:      168 60% 95%   /* #E0F2F1  light text */
+--muted-fg:        210 20% 50%   /* #5a7080  subdued */
+--border:          210 40% 15%   /* #172130  subtle border */
+--destructive:     0 85% 60%     /* #f25555  errors */
+--sidebar-bg:      220 30% 4%    /* #07101a  sidebar */
+```
+
+### Typography
+
+- UI: `Inter` (system fallback: system-ui, sans-serif)
+- Code / data / scores: `JetBrains Mono`
+
+### Animations
+
+```css
+fadeIn          0.3s ease-out          messages, cards entering
+slideUp         0.25s ease-out         panels
+typingDot       1.4s ease-in-out ∞    typing indicator dots
+shimmer         1.5s linear ∞          loading skeletons
+pulseGlow       2s ease-in-out ∞       score gauge ring
+```
+
+### Key CSS Utility Classes
+
+```
+.glass-card     backdrop-blur + translucent dark navy bg
+.badge-high     red background  — 🔴 high risk
+.badge-medium   amber           — 🟡 medium risk
+.badge-low      green           — 🟢 low risk
+.badge-contract teal            — contract document type
+.font-mono-data JetBrains Mono for numbers/scores
+.typing-dot     animation: typingDot + staggered delay
+```
 
 ---
 
-## 7. Files Created / Modified
+## 7. Database Schema
 
-### v1 (initial build)
-| File | Purpose |
-|------|---------|
-| `api/routers/contract-review.ts` | 5-agent pipeline (rewritten) |
-| `api/routers/batch-review.ts` | Parallel multi-contract analysis |
-| `api/routers/generate.ts` | NDA/Terms/Privacy/Agreement generator |
-| `src/pages/BatchReview.tsx` | Batch review UI |
-| `src/pages/Generate.tsx` | Document generation UI |
-| `api/index.ts` | Vercel serverless entry point |
-| `vercel.json` | Vercel deployment config |
-
-### v2 (chat-first redesign)
-| File | Change |
-|------|--------|
-| `api/routers/chat.ts` | NEW — intent-aware response engine |
-| `src/pages/Chat.tsx` | NEW — chat-first interface with doc upload |
-| `src/components/AppLayout.tsx` | Slimmed to 6 nav items |
-| `src/App.tsx` | Updated routes |
-| `api/router.ts` | Added chat router |
-| `BLUEPRINT.md` | This file — updated |
+```typescript
+users           id, unionId, name, email, avatar, role
+documents       id, userId, title, content, type, status, fileUrl, fileSize
+chatSessions    id, userId, title, documentId, engineId, messageCount, timestamps
+chatMessages    id, sessionId, role, content, analysisType, analysisResult, citations, tokenCount
+contractReviews id, documentId, userId, safetyScore, letterGrade, [5 agent JSON fields], status
+analyses        id, documentId, type, status, result, summary, confidence
+aiEngines       id, name, provider, model, apiKey, baseUrl, temperature, maxTokens, isDefault
+reports         id, userId, type, entityId, content, safetyScore, fileUrl
+activityLog     id, userId, action, entityType, entityId, metadata
+```
 
 ---
 
-## 8. Deployment
+## 8. Scoring Formulas
 
-### Vercel (live)
+### Contract Safety Score (0–100)
+
+```
+Start at 100. Deduct:
+  −15  unlimited liability
+  −12  no data protection / GDPR missing
+  −10  no liability cap
+  −10  missing IP ownership clause
+  −8   missing dispute resolution
+  −8   missing force majeure
+  −8   auto-renewal < 60-day window
+  −5   no payment terms
+  −5   missing confidentiality clause
+  −3   each additional unprotected risk
+
+Grade:  90–100 = A   |   80–89 = B   |   70–79 = C
+        60–69 = D    |   < 60 = F
+```
+
+### Clause Risk Score (per clause)
+
+```
+Score = (Severity × 0.40) + (Likelihood × 0.25) + (Financial × 0.20) + (Asymmetry × 0.15)
+
+🔴 High:   7.0 – 10.0
+🟡 Medium: 4.0 – 6.9
+🟢 Low:    1.0 – 3.9
+```
+
+---
+
+## 9. Document Generators
+
+| Type | Variants | Compliance |
+|------|----------|------------|
+| NDA | Mutual / One-way / Employee / Vendor | Standard |
+| Terms of Service | SaaS / Marketplace / API | GDPR + CCPA |
+| Privacy Policy | Full / Minimal / Cookie-only | GDPR Art. 13 + CCPA |
+| Service Agreement | MSA / SOW / Freelancer / Partnership | IRS contractor-safe |
+
+Each document:
+- Full markdown with clause headings
+- Plain-English annotations per clause
+- Legal disclaimer footer
+
+---
+
+## 10. PWA Configuration
+
+```json
+{
+  "name": "Nexus Legal",
+  "short_name": "Nexus",
+  "description": "AI legal analysis — chat-first",
+  "theme_color": "#00BFBF",
+  "background_color": "#080f1a",
+  "display": "standalone",
+  "start_url": "/",
+  "scope": "/"
+}
+```
+
+**Workbox caching strategy:**
+- `NetworkFirst` — API calls (`/api/trpc/*`)
+- `CacheFirst` — static assets (JS/CSS bundles, fonts)
+- `StaleWhileRevalidate` — HTML pages
+
+---
+
+## 11. Demo Mode
+
+When `DATABASE_URL` is unset (Vercel without DB):
+- Auth: skipped — app opens as guest
+- Chat: intent engine runs fully — all responses are real, rule-based
+- Documents: upload stored in-memory (reset on restart)
+- Batch: accepts raw text directly
+- All generation: works without DB
+
+---
+
+## 12. Deployment
+
+### Live
+
 - **GitHub:** https://github.com/dnzengou/legal-ai-agent
 - **Production:** https://legal-ai-agent-fawn.vercel.app
 - **Account:** dnzengou (desire.yavro@gmail.com)
 
-### Environment Variables (Vercel dashboard)
+### Environment Variables
+
 ```
-DATABASE_URL=mysql://...         # PlanetScale/Railway — leave blank for demo mode
+DATABASE_URL=mysql://...        # optional — demo mode if absent
 APP_SECRET=<32+ chars>
 KIMI_AUTH_URL=https://auth.moonshot.cn
 KIMI_OPEN_URL=https://api.moonshot.cn
@@ -176,38 +303,65 @@ APP_ID=<kimi app id>
 OWNER_UNION_ID=<kimi union id>
 ```
 
-### Demo Mode
-When `DATABASE_URL` is unset:
-- Auth skipped — app opens directly
-- All analysis uses simulated data
-- Documents stored in-memory (reset on restart)
-- Full UI functional for evaluation
-
----
-
-## 9. Quick Start (Local)
+### Commands
 
 ```bash
-cd Kimi_Agent_LegalAI_Build
-npm install
-cp .env.example .env   # leave DATABASE_URL blank for demo
-npm run dev            # http://localhost:3000
+npm install               # install deps (includes vite-plugin-pwa)
+npm run dev               # http://localhost:3000
+npm run build             # build frontend + bundle API
+npm run db:push           # apply schema to DB (requires DATABASE_URL)
 ```
 
 ---
 
-## 10. Planned Extensions (v3)
+## 13. Files — v3 Change Log
 
-| Feature | Effort | Priority |
-|---------|--------|----------|
-| Real AI calls (Anthropic/OpenAI) | Medium | High |
-| PDF text extraction (pdfjs-dist) | Medium | High |
-| Streaming API responses | Medium | High |
-| Conversation persistence (DB) | Medium | Medium |
-| PDF export from chat | Low | Medium |
-| Custom AI engine per chat | Low | Low |
-| Team workspaces | High | Low |
+| File | Status | Notes |
+|------|--------|-------|
+| `src/index.css` | ✅ Enhanced | Rich design tokens, typing animations, badge classes, shimmer, scrollbar |
+| `src/App.tsx` | ✅ Simplified | 3 routes: /, /documents, /settings + /login + /landing |
+| `src/components/AppLayout.tsx` | ✅ Lean | 3-item nav, New Chat button, PanelLeft collapse icons |
+| `src/pages/Chat.tsx` | ✅ Full rewrite | AnalysisCard, score gauge, session URL, drag-drop, type selector |
+| `db/schema.ts` | ✅ Extended | + chatSessions + chatMessages tables |
+| `api/routers/chat.ts` | ✅ Enhanced | Intent engine + 11 response generators |
+| `api/routers/batch-review.ts` | ✅ Built | Parallel rapidAssess + portfolio scoring |
+| `api/routers/generate.ts` | ✅ Built | NDA/Terms/Privacy/Agreement generators |
+| `api/index.ts` | ✅ Created | Vercel serverless entry |
+| `vite.config.ts` | ✅ PWA | VitePWA() plugin added |
+| `public/manifest.webmanifest` | ✅ Created | PWA manifest |
+| `package.json` | ✅ Updated | + vite-plugin-pwa devDependency |
+| `vercel.json` | ✅ Fixed | No broken functions block |
+| `BLUEPRINT.md` | ✅ This file | v3 full spec |
 
 ---
 
-*Nexus Legal v2.0 — 2026-05-18*
+## 14. Planned Extensions (v4+)
+
+| Feature | Effort | Priority |
+|---------|--------|----------|
+| Real AI calls (Anthropic Claude API) | Medium | High |
+| PDF text extraction (pdfjs-dist) | Medium | High |
+| Streaming API responses (SSE) | Medium | High |
+| Conversation persistence (DB-backed) | Medium | Medium |
+| PDF export from chat (ReportLab) | Low | Medium |
+| Custom AI engine per chat session | Low | Low |
+| Team workspaces + shared sessions | High | Low |
+| Chrome extension — review on DocuSign | High | Low |
+| Contract expiry webhook alerts | Medium | Low |
+| Mobile app (PWA + Capacitor) | High | Low |
+
+---
+
+## 15. Rules
+
+1. Legal outputs always include the disclaimer — never omit it
+2. Never claim to provide legal advice — only analysis and drafting assistance
+3. Always surface risks even when the user seems to want a green light
+4. Risk levels: 🔴 High (7–10), 🟡 Medium (4–6), 🟢 Low (1–3)
+5. Output markdown files to cwd unless user specifies otherwise
+6. File names follow the templates above — stay consistent
+7. Demo mode must be fully functional without any database
+
+---
+
+*Nexus Legal v3.0 — 2026-05-19*

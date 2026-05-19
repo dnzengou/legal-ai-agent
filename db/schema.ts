@@ -185,6 +185,37 @@ export const reports = mysqlTable("reports", {
 
 export type Report = typeof reports.$inferSelect;
 
+// ── Chat Sessions ─────────────────────────────────────────────────
+export const chatSessions = mysqlTable("chatSessions", {
+  id: serial("id").primaryKey(),
+  userId: bigint("userId", { mode: "number", unsigned: true }).notNull().references(() => users.id),
+  title: varchar("title", { length: 255 }).default("New Chat").notNull(),
+  documentId: bigint("documentId", { mode: "number", unsigned: true }).references(() => documents.id),
+  engineId: bigint("engineId", { mode: "number", unsigned: true }).references(() => aiEngines.id),
+  messageCount: int("messageCount").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull().$onUpdate(() => new Date()),
+});
+
+export type ChatSession = typeof chatSessions.$inferSelect;
+export type InsertChatSession = typeof chatSessions.$inferInsert;
+
+// ── Chat Messages ─────────────────────────────────────────────────
+export const chatMessages = mysqlTable("chatMessages", {
+  id: serial("id").primaryKey(),
+  sessionId: bigint("sessionId", { mode: "number", unsigned: true }).notNull().references(() => chatSessions.id),
+  role: mysqlEnum("role", ["user", "assistant", "system"]).notNull(),
+  content: text("content").notNull(),
+  analysisType: varchar("analysisType", { length: 50 }),
+  analysisResult: json("analysisResult"),
+  citations: json("citations"),
+  tokenCount: int("tokenCount"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ChatMessage = typeof chatMessages.$inferSelect;
+export type InsertChatMessage = typeof chatMessages.$inferInsert;
+
 // ── Activity Log ──────────────────────────────────────────────────
 export const activityLog = mysqlTable("activityLog", {
   id: serial("id").primaryKey(),

@@ -1,125 +1,239 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { useSearchParams } from "react-router";
 import { trpc } from "@/providers/trpc";
-import { toast } from "sonner";
 import {
-  Send, Paperclip, X, Plus, MessageSquare, FileText,
-  Scale, ChevronRight, Loader2, Copy, Check, Download,
+  Send, Paperclip, X, Copy, Download, FileText, Shield,
+  BookOpen, ChevronDown, Scale, Sparkles, AlertTriangle,
+  CheckCircle, RotateCcw, Loader2,
 } from "lucide-react";
 
 // ── Types ─────────────────────────────────────────────────────────
+
+type Role = "user" | "assistant";
+
+interface Citation {
+  text: string;
+  reference: string;
+}
+
 interface Message {
   id: string;
-  role: "user" | "assistant";
+  role: Role;
   content: string;
-  timestamp: Date;
-  docName?: string;
+  intent?: string;
+  citations?: Citation[];
+  processingTime?: number;
+  timestamp: string;
+  isStreaming?: boolean;
 }
 
-interface Conversation {
-  id: string;
-  title: string;
-  messages: Message[];
-  createdAt: Date;
-}
-
-interface AttachedDoc {
+interface UploadedDoc {
   name: string;
   content: string;
   size: number;
 }
 
-// ── Quick actions shown on empty state ───────────────────────────
-const QUICK_ACTIONS = [
-  { label: "Review a Contract", prompt: "Please review the attached contract and give me a full safety assessment.", icon: "⚖️" },
-  { label: "Identify All Risks", prompt: "Identify and score all risks in this agreement.", icon: "🔍" },
-  { label: "Check GDPR/CCPA", prompt: "Is this contract compliant with GDPR and CCPA?", icon: "✅" },
-  { label: "Plain English", prompt: "Explain this contract in plain English, section by section.", icon: "📖" },
-  { label: "Generate Counter-Proposals", prompt: "Generate counter-proposals and a negotiation email for this contract.", icon: "🤝" },
-  { label: "Generate NDA", prompt: "Generate a mutual NDA.", icon: "🔒" },
+type AnalysisType =
+  | "auto"
+  | "contract_review"
+  | "risk_assessment"
+  | "compliance_check"
+  | "plain_english"
+  | "negotiate"
+  | "missing_protection";
+
+const ANALYSIS_OPTIONS: { value: AnalysisType; label: string }[] = [
+  { value: "auto", label: "Auto-detect" },
+  { value: "contract_review", label: "Contract Review" },
+  { value: "risk_assessment", label: "Risk Assessment" },
+  { value: "compliance_check", label: "Compliance Check" },
+  { value: "plain_english", label: "Plain English" },
+  { value: "negotiate", label: "Negotiate" },
+  { value: "missing_protection", label: "Missing Protections" },
 ];
 
-// ── Markdown-ish renderer (no deps) ──────────────────────────────
-function renderMarkdown(text: string): string {
-  return text
-    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-    .replace(/^### (.*?)$/gm, '<h3 class="text-sm font-semibold text-[#E0F2F1] mt-4 mb-2">$1</h3>')
-    .replace(/^## (.*?)$/gm, '<h2 class="text-base font-semibold text-[#00BFBF] mt-5 mb-2">$1</h2>')
-    .replace(/^---$/gm, '<hr class="border-[#00BFBF]/10 my-3" />')
-    .replace(/`([^`]+)`/g, '<code class="bg-[#001A33] text-[#00BFBF] px-1.5 py-0.5 rounded text-xs font-mono">$1</code>')
-    .replace(/^> (.*?)$/gm, '<blockquote class="border-l-2 border-[#00BFBF]/40 pl-3 text-[#7A8B99] italic my-2 text-xs">$1</blockquote>')
-    .replace(/\| (.*?) \|/g, (match) => match) // leave tables as-is for now
-    .replace(/\n/g, "<br/>");
+const QUICK_ACTIONS = [
+  { icon: Shield, label: "Review Contract", prompt: "Review this contract for risks and issues", color: "text-red-400" },
+  { icon: AlertTriangle, label: "Find Risks", prompt: "What are the major risks in this agreement?", color: "text-amber-400" },
+  { icon: CheckCircle, label: "Check Compliance", prompt: "Is this contract GDPR and CCPA compliant?", color: "text-emerald-400" },
+  { icon: BookOpen, label: "Plain English", prompt: "Explain this contract in plain English", color: "text-blue-400" },
+  { icon: RotateCcw, label: "Negotiate", prompt: "Generate counter-proposals for this contract", color: "text-violet-400" },
+  { icon: Sparkles, label: "Draft NDA", prompt: "Generate a mutual NDA for a software partnership", color: "text-[#00BFBF]" },
+];
+
+// ── Helpers ───────────────────────────────────────────────────────
+
+function uid() {
+  return Math.random().toString(36).slice(2, 10);
 }
 
-function hasTable(text: string) { return /\|.*\|/.test(text); }
-
-function TableRenderer({ text }: { text: string }) {
-  const rows = text.split("\n").filter(l => l.includes("|") && l.trim());
-  if (rows.length < 2) return null;
-  const headers = rows[0].split("|").filter(Boolean).map(h => h.trim());
-  const body = rows.slice(2).map(r => r.split("|").filter(Boolean).map(c => c.trim()));
-  return (
-    <div className="overflow-x-auto my-3 rounded-xl border border-[#00BFBF]/10">
-      <table className="w-full text-xs">
-        <thead>
-          <tr className="bg-[#001A33]/60">
-            {headers.map((h, i) => <th key={i} className="px-3 py-2 text-left text-[#00BFBF] font-medium whitespace-nowrap">{h}</th>)}
-          </tr>
-        </thead>
-        <tbody>
-          {body.map((row, i) => (
-            <tr key={i} className="border-t border-[#00BFBF]/5 hover:bg-[#001A33]/30 transition-colors">
-              {row.map((cell, j) => (
-                <td key={j} className="px-3 py-2 text-[#C8D8E8]"
-                  dangerouslySetInnerHTML={{ __html: cell.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/❌/g, '<span class="text-red-400">❌</span>').replace(/✅/g, '<span class="text-emerald-400">✅</span>').replace(/⚠️/g, '<span class="text-yellow-400">⚠️</span>').replace(/🔴/g, '<span class="text-red-400">🔴</span>').replace(/🟡/g, '<span class="text-yellow-400">🟡</span>').replace(/🟢/g, '<span class="text-emerald-400">🟢</span>') }} />
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
+function formatBytes(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function MessageContent({ content }: { content: string }) {
-  // Split by table blocks
-  const parts = content.split(/((?:\|.*\|\n?){2,})/gm);
-  return (
-    <div className="text-sm text-[#C8D8E8] leading-relaxed space-y-1">
-      {parts.map((part, i) => {
-        if (hasTable(part)) return <TableRenderer key={i} text={part} />;
-        return <div key={i} dangerouslySetInnerHTML={{ __html: renderMarkdown(part) }} />;
-      })}
-    </div>
-  );
+function formatTime(iso: string) {
+  return new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
-// ── Typewriter effect ─────────────────────────────────────────────
+// ── Typewriter hook ───────────────────────────────────────────────
+
 function useTypewriter(text: string, active: boolean) {
   const [displayed, setDisplayed] = useState("");
+  const idx = useRef(0);
+
   useEffect(() => {
     if (!active) { setDisplayed(text); return; }
     setDisplayed("");
-    let i = 0;
-    const speed = Math.max(4, Math.min(12, Math.floor(3000 / text.length)));
-    const iv = setInterval(() => {
-      i += Math.ceil(text.length / 400); // adaptive speed
-      setDisplayed(text.slice(0, i));
-      if (i >= text.length) clearInterval(iv);
+    idx.current = 0;
+    const speed = text.length > 800 ? 4 : text.length > 400 ? 8 : 14;
+    const tick = setInterval(() => {
+      if (idx.current >= text.length) { clearInterval(tick); return; }
+      const chunk = Math.min(3, text.length - idx.current);
+      setDisplayed(text.slice(0, idx.current + chunk));
+      idx.current += chunk;
     }, speed);
-    return () => clearInterval(iv);
+    return () => clearInterval(tick);
   }, [text, active]);
+
   return displayed;
 }
 
-function AssistantMessage({ msg, isLatest }: { msg: Message; isLatest: boolean }) {
+// ── Score Gauge ───────────────────────────────────────────────────
+
+function ScoreGauge({ score }: { score: number }) {
+  const r = 36;
+  const circ = 2 * Math.PI * r;
+  const offset = circ * (1 - score / 100);
+  const grade = score >= 90 ? "A" : score >= 80 ? "B" : score >= 70 ? "C" : score >= 60 ? "D" : "F";
+  const color = score >= 80 ? "#10b981" : score >= 60 ? "#f59e0b" : "#ef4444";
+
+  return (
+    <div className="flex items-center gap-4 p-4 rounded-xl bg-[#0d1829]/80 border border-[#172130]">
+      <div className="relative w-20 h-20 flex-shrink-0">
+        <svg viewBox="0 0 88 88" className="rotate-[-90deg] w-full h-full">
+          <circle cx="44" cy="44" r={r} stroke="#172130" strokeWidth="8" fill="none" />
+          <circle
+            cx="44" cy="44" r={r}
+            stroke={color} strokeWidth="8" fill="none"
+            strokeDasharray={circ}
+            strokeDashoffset={offset}
+            strokeLinecap="round"
+            style={{ transition: "stroke-dashoffset 1s cubic-bezier(0.34,1.56,0.64,1)" }}
+          />
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span className="font-mono-data text-lg font-bold" style={{ color }}>{score}</span>
+          <span className="text-[10px] text-[#5a7080]">/ 100</span>
+        </div>
+      </div>
+      <div>
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-2xl font-bold" style={{ color }}>{grade}</span>
+          <span className="text-sm text-[#E0F2F1] font-medium">Safety Score</span>
+        </div>
+        <p className="text-xs text-[#5a7080]">
+          {score >= 80
+            ? "Low risk — proceed with minor revisions"
+            : score >= 60
+            ? "Moderate risk — negotiate key clauses"
+            : "High risk — significant issues need attention"}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ── Inline markdown renderer ──────────────────────────────────────
+
+function renderInline(text: string): React.ReactNode {
+  const parts = text.split(/(\*\*[^*]+\*\*|`[^`]+`|\[.+?\]\(.+?\))/g);
+  return parts.map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**"))
+      return <strong key={i} className="font-semibold text-[#E0F2F1]">{part.slice(2, -2)}</strong>;
+    if (part.startsWith("`") && part.endsWith("`"))
+      return <code key={i} className="font-mono-data text-xs bg-[#00BFBF]/10 text-[#00BFBF] px-1.5 py-0.5 rounded">{part.slice(1, -1)}</code>;
+    const linkMatch = part.match(/\[(.+?)\]\((.+?)\)/);
+    if (linkMatch)
+      return <a key={i} href={linkMatch[2]} className="text-[#00BFBF] underline underline-offset-2 hover:text-[#00DFDF]">{linkMatch[1]}</a>;
+    return part;
+  });
+}
+
+function renderMarkdown(raw: string): React.ReactNode[] {
+  const lines = raw.split("\n");
+  const out: React.ReactNode[] = [];
+  let inTable = false;
+  let tableRows: string[][] = [];
+
+  function flushTable() {
+    if (!tableRows.length) return;
+    const [head, , ...body] = tableRows;
+    out.push(
+      <div key={`t${out.length}`} className="overflow-x-auto my-3">
+        <table className="w-full text-xs border-collapse">
+          <thead>
+            <tr>{head?.map((c, i) => (
+              <th key={i} className="text-left font-medium text-[#7A8B99] border-b border-[#172130] pb-1.5 pr-4">{c.trim()}</th>
+            ))}</tr>
+          </thead>
+          <tbody>
+            {body.map((row, ri) => (
+              <tr key={ri}>{row.map((c, ci) => (
+                <td key={ci} className="border-b border-[#172130]/50 py-1.5 pr-4 text-[#C8E0DC] align-top">{c.trim()}</td>
+              ))}</tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+    tableRows = [];
+    inTable = false;
+  }
+
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i];
+    if (l.startsWith("|")) { inTable = true; tableRows.push(l.split("|").slice(1, -1)); continue; }
+    if (inTable) flushTable();
+
+    if (l.startsWith("## "))
+      out.push(<h2 key={i} className="text-base font-semibold text-[#E0F2F1] mt-5 mb-2 first:mt-0">{l.slice(3)}</h2>);
+    else if (l.startsWith("### "))
+      out.push(<h3 key={i} className="text-sm font-semibold text-[#00BFBF] mt-4 mb-1.5">{l.slice(4)}</h3>);
+    else if (l.startsWith("---"))
+      out.push(<hr key={i} className="border-[#172130] my-4" />);
+    else if (l.startsWith("- ") || l.startsWith("* "))
+      out.push(<li key={i} className="text-sm text-[#C8E0DC] pl-1 ml-4" style={{ listStyleType: "disc" }}>{renderInline(l.slice(2))}</li>);
+    else if (/^\d+\.\s/.test(l))
+      out.push(<li key={i} className="text-sm text-[#C8E0DC] pl-1 ml-4" style={{ listStyleType: "decimal" }}>{renderInline(l.replace(/^\d+\.\s/, ""))}</li>);
+    else if (l.startsWith("> "))
+      out.push(<blockquote key={i} className="border-l-2 border-[#00BFBF]/40 pl-3 italic text-[#7A8B99] my-2 text-sm">{renderInline(l.slice(2))}</blockquote>);
+    else if (l.trim() === "")
+      out.push(<div key={i} className="h-2" />);
+    else
+      out.push(<p key={i} className="text-sm text-[#C8E0DC] leading-relaxed">{renderInline(l)}</p>);
+  }
+  if (inTable) flushTable();
+  return out;
+}
+
+// ── Message bubble ────────────────────────────────────────────────
+
+function MessageBubble({ msg }: { msg: Message }) {
   const [copied, setCopied] = useState(false);
-  const displayed = useTypewriter(msg.content, isLatest);
+  const isUser = msg.role === "user";
+
+  const displayed = useTypewriter(msg.content, msg.role === "assistant" && Boolean(msg.isStreaming));
+  const text = msg.isStreaming ? displayed : msg.content;
+
+  const scoreMatch = text.match(/Safety Score.*?(\d{1,3})\s*\/\s*100/i) ?? text.match(/Score[:\s]+(\d{1,3})\s*\/\s*100/i);
+  const score = scoreMatch ? parseInt(scoreMatch[1], 10) : null;
 
   function copy() {
     navigator.clipboard.writeText(msg.content);
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    setTimeout(() => setCopied(false), 1500);
   }
 
   function download() {
@@ -127,353 +241,336 @@ function AssistantMessage({ msg, isLatest }: { msg: Message; isLatest: boolean }
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `nexus-legal-${msg.timestamp.toISOString().split("T")[0]}.md`;
+    a.download = `nexus-legal-${msg.timestamp.slice(0, 10)}.md`;
     a.click();
     URL.revokeObjectURL(url);
   }
 
-  return (
-    <div className="flex gap-3 group">
-      <div className="w-8 h-8 rounded-full bg-[#00BFBF]/15 border border-[#00BFBF]/30 flex items-center justify-center flex-shrink-0 mt-0.5">
-        <Scale size={14} className="text-[#00BFBF]" />
+  if (isUser) {
+    return (
+      <div className="flex justify-end animate-fade-in">
+        <div className="max-w-[80%] px-4 py-2.5 rounded-2xl rounded-br-sm bg-[#00BFBF]/15 border border-[#00BFBF]/20 text-sm text-[#E0F2F1] leading-relaxed">
+          {msg.content}
+        </div>
       </div>
-      <div className="flex-1 min-w-0">
-        <div className="text-xs text-[#7A8B99] mb-1.5">Nexus Legal</div>
-        <div className="bg-[#002B52]/50 border border-[#00BFBF]/10 rounded-2xl rounded-tl-sm px-4 py-3">
-          <MessageContent content={displayed} />
-          {isLatest && displayed.length < msg.content.length && (
-            <span className="inline-block w-1.5 h-4 bg-[#00BFBF] ml-0.5 animate-pulse rounded-sm" />
+    );
+  }
+
+  return (
+    <div className="animate-fade-in">
+      <div className="flex items-start gap-3">
+        <div className="w-7 h-7 rounded-lg bg-[#00BFBF]/15 border border-[#00BFBF]/25 flex items-center justify-center flex-shrink-0 mt-0.5">
+          <Scale size={14} className="text-[#00BFBF]" />
+        </div>
+        <div className="flex-1 min-w-0">
+          {score !== null && score >= 0 && score <= 100 && (
+            <div className="mb-4"><ScoreGauge score={score} /></div>
+          )}
+
+          <div className="space-y-0.5">{renderMarkdown(text)}</div>
+
+          {msg.isStreaming && displayed.length < msg.content.length && (
+            <span className="inline-block w-0.5 h-4 bg-[#00BFBF] animate-pulse ml-0.5 align-middle" />
+          )}
+
+          {msg.citations && msg.citations.length > 0 && (
+            <div className="mt-3 space-y-1.5">
+              {msg.citations.map((c, i) => (
+                <div key={i} className="flex items-start gap-2 p-2 rounded-lg bg-[#0d1829]/60 border border-[#172130]">
+                  <BookOpen size={12} className="text-[#5a7080] mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-xs text-[#C8E0DC]">{c.text}</p>
+                    <p className="text-[10px] text-[#5a7080] mt-0.5 font-mono-data">{c.reference}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {!msg.isStreaming && (
+            <div className="flex items-center gap-2 mt-3">
+              <button onClick={copy} className="flex items-center gap-1.5 text-[10px] text-[#5a7080] hover:text-[#E0F2F1] transition-colors px-2 py-1 rounded-md hover:bg-[#172130]/60">
+                <Copy size={11} />{copied ? "Copied!" : "Copy"}
+              </button>
+              <button onClick={download} className="flex items-center gap-1.5 text-[10px] text-[#5a7080] hover:text-[#E0F2F1] transition-colors px-2 py-1 rounded-md hover:bg-[#172130]/60">
+                <Download size={11} />Download
+              </button>
+              {msg.processingTime && (
+                <span className="text-[10px] text-[#5a7080] ml-auto font-mono-data">
+                  {msg.processingTime}ms · {formatTime(msg.timestamp)}
+                </span>
+              )}
+            </div>
           )}
         </div>
-        <div className="flex items-center gap-2 mt-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button onClick={copy} className="flex items-center gap-1 text-[10px] text-[#7A8B99] hover:text-[#00BFBF] transition-colors">
-            {copied ? <Check size={11} className="text-emerald-400" /> : <Copy size={11} />}
-            {copied ? "Copied" : "Copy"}
-          </button>
-          <button onClick={download} className="flex items-center gap-1 text-[10px] text-[#7A8B99] hover:text-[#00BFBF] transition-colors">
-            <Download size={11} /> Save
-          </button>
-          <span className="text-[10px] text-[#4A5B6A]">{msg.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
-        </div>
       </div>
     </div>
   );
 }
 
-function UserMessage({ msg }: { msg: Message }) {
+function TypingIndicator() {
   return (
-    <div className="flex gap-3 justify-end">
-      <div className="max-w-[75%]">
-        {msg.docName && (
-          <div className="flex items-center gap-1.5 text-[10px] text-[#7A8B99] mb-1 justify-end">
-            <FileText size={10} className="text-[#00BFBF]" /> {msg.docName}
-          </div>
-        )}
-        <div className="bg-[#00BFBF]/10 border border-[#00BFBF]/20 rounded-2xl rounded-tr-sm px-4 py-3">
-          <p className="text-sm text-[#E0F2F1] leading-relaxed whitespace-pre-wrap">{msg.content}</p>
-        </div>
-        <p className="text-[10px] text-[#4A5B6A] mt-1 text-right">
-          {msg.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-        </p>
+    <div className="flex items-center gap-3 animate-fade-in">
+      <div className="w-7 h-7 rounded-lg bg-[#00BFBF]/15 border border-[#00BFBF]/25 flex items-center justify-center flex-shrink-0">
+        <Scale size={14} className="text-[#00BFBF]" />
+      </div>
+      <div className="flex items-center gap-1.5 px-4 py-3 rounded-2xl bg-[#0d1829]/60 border border-[#172130]">
+        <div className="typing-dot" />
+        <div className="typing-dot" />
+        <div className="typing-dot" />
       </div>
     </div>
   );
 }
 
-function EmptyState({ onAction }: { onAction: (prompt: string) => void }) {
-  return (
-    <div className="flex flex-col items-center justify-center h-full px-6 text-center space-y-8">
-      <div className="space-y-3">
-        <div className="w-16 h-16 rounded-2xl bg-[#00BFBF]/10 border border-[#00BFBF]/20 flex items-center justify-center mx-auto">
-          <Scale className="w-8 h-8 text-[#00BFBF]" />
-        </div>
-        <div>
-          <h2 className="text-xl font-semibold text-[#E0F2F1]">Nexus Legal</h2>
-          <p className="text-sm text-[#7A8B99] mt-1">AI-powered legal analysis. Upload a contract or ask anything.</p>
-        </div>
-      </div>
+// ── Main ──────────────────────────────────────────────────────────
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-xl">
-        {QUICK_ACTIONS.map((action) => (
-          <button key={action.label} onClick={() => onAction(action.prompt)}
-            className="flex items-center gap-3 text-left px-4 py-3 rounded-xl bg-[#002B52]/50 border border-[#00BFBF]/10 hover:border-[#00BFBF]/30 hover:bg-[#002B52]/80 transition-all group">
-            <span className="text-xl flex-shrink-0">{action.icon}</span>
-            <span className="text-sm text-[#C8D8E8] group-hover:text-[#E0F2F1] transition-colors">{action.label}</span>
-            <ChevronRight size={14} className="text-[#7A8B99] ml-auto flex-shrink-0 group-hover:text-[#00BFBF] transition-colors" />
-          </button>
-        ))}
-      </div>
-
-      <p className="text-xs text-[#4A5B6A] max-w-sm">
-        Legal analysis only — not legal advice. Always consult a qualified attorney before signing.
-      </p>
-    </div>
-  );
-}
-
-// ── Main Chat page ────────────────────────────────────────────────
 export default function Chat() {
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [activeId, setActiveId] = useState<string | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
-  const [attachedDoc, setAttachedDoc] = useState<AttachedDoc | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [latestMsgId, setLatestMsgId] = useState<string | null>(null);
+  const [doc, setDoc] = useState<UploadedDoc | null>(null);
+  const [analysisType, setAnalysisType] = useState<AnalysisType>("auto");
+  const [isDragging, setIsDragging] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+  const [showTypeSelector, setShowTypeSelector] = useState(false);
+
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const activeConv = conversations.find(c => c.id === activeId) ?? null;
+  useEffect(() => {
+    if (!searchParams.get("s")) setSearchParams({ s: uid() }, { replace: true });
+  }, [searchParams, setSearchParams]);
 
-  const sendMutation = trpc.chat.send.useMutation({
-    onSuccess: (data) => {
-      const msg: Message = {
-        id: crypto.randomUUID(),
-        role: "assistant",
-        content: data.content,
-        timestamp: new Date(),
-      };
-      setLatestMsgId(msg.id);
-      setConversations(prev => prev.map(c =>
-        c.id === activeId ? { ...c, messages: [...c.messages, msg] } : c
-      ));
-    },
-    onError: (err) => toast.error(err.message),
-  });
-
-  // Auto-scroll to bottom when messages change
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [activeConv?.messages.length, sendMutation.isPending]);
+  }, [messages, isTyping]);
 
-  // Auto-resize textarea
-  useEffect(() => {
-    const el = textareaRef.current;
-    if (!el) return;
-    el.style.height = "auto";
-    el.style.height = `${Math.min(el.scrollHeight, 180)}px`;
-  }, [input]);
+  const sendMutation = trpc.chat.send.useMutation({
+    onSuccess(data) {
+      setIsTyping(false);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: uid(),
+          role: "assistant",
+          content: data.content,
+          intent: data.intent,
+          processingTime: data.processingTime,
+          timestamp: data.timestamp,
+          isStreaming: true,
+        },
+      ]);
+    },
+    onError(err) {
+      setIsTyping(false);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: uid(),
+          role: "assistant",
+          content: `Error: ${err.message}. Please try again.`,
+          timestamp: new Date().toISOString(),
+        },
+      ]);
+    },
+  });
 
-  function newConversation() {
-    const id = crypto.randomUUID();
-    const conv: Conversation = { id, title: "New conversation", messages: [], createdAt: new Date() };
-    setConversations(prev => [conv, ...prev]);
-    setActiveId(id);
+  const send = useCallback(async (text: string) => {
+    const trimmed = text.trim();
+    if (!trimmed || sendMutation.isPending) return;
+
+    setMessages((prev) => [...prev, {
+      id: uid(), role: "user", content: trimmed, timestamp: new Date().toISOString(),
+    }]);
     setInput("");
-    setAttachedDoc(null);
-  }
+    setIsTyping(true);
 
-  function send(text?: string) {
-    const content = (text ?? input).trim();
-    if (!content || sendMutation.isPending) return;
-
-    // Create conversation if none active
-    let targetId = activeId;
-    if (!targetId) {
-      const id = crypto.randomUUID();
-      const title = content.slice(0, 40) + (content.length > 40 ? "…" : "");
-      const conv: Conversation = { id, title, messages: [], createdAt: new Date() };
-      setConversations(prev => [conv, ...prev]);
-      setActiveId(id);
-      targetId = id;
-    }
-
-    const userMsg: Message = {
-      id: crypto.randomUUID(),
-      role: "user",
-      content,
-      timestamp: new Date(),
-      docName: attachedDoc?.name,
-    };
-
-    // Update title from first message
-    setConversations(prev => prev.map(c => {
-      if (c.id !== targetId) return c;
-      const title = c.messages.length === 0 ? content.slice(0, 40) + (content.length > 40 ? "…" : "") : c.title;
-      return { ...c, title, messages: [...c.messages, userMsg] };
-    }));
-
-    setInput("");
-    const docContent = attachedDoc?.content;
-    const docName = attachedDoc?.name;
-    setAttachedDoc(null);
+    const augmented = analysisType !== "auto"
+      ? `[Mode: ${ANALYSIS_OPTIONS.find((o) => o.value === analysisType)?.label}]\n\n${trimmed}`
+      : trimmed;
 
     sendMutation.mutate({
-      message: content,
-      documentContent: docContent,
-      documentName: docName,
-      conversationHistory: activeConv?.messages.slice(-6).map(m => ({ role: m.role, content: m.content })),
+      message: augmented,
+      documentContent: doc?.content,
+      documentName: doc?.name,
+      conversationHistory: messages.slice(-8).map((m) => ({ role: m.role, content: m.content })),
     });
+  }, [sendMutation, doc, messages, analysisType]);
+
+  async function readFile(file: File) {
+    const content = await file.text();
+    setDoc({ name: file.name, content, size: file.size });
   }
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
-  }, [input, attachedDoc, activeId]);
+  const selectedLabel = useMemo(
+    () => ANALYSIS_OPTIONS.find((o) => o.value === analysisType)?.label ?? "Auto-detect",
+    [analysisType],
+  );
 
-  async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > 5 * 1024 * 1024) { toast.error("File too large — max 5 MB"); return; }
-
-    const ext = file.name.split(".").pop()?.toLowerCase();
-    if (!["txt", "md", "pdf", "docx"].includes(ext ?? "")) {
-      toast.error("Supported formats: .txt .md .pdf .docx");
-      return;
-    }
-
-    if (ext === "txt" || ext === "md") {
-      const text = await file.text();
-      setAttachedDoc({ name: file.name, content: text, size: file.size });
-    } else {
-      // PDF/DOCX: we can't extract client-side without deps — attach with placeholder
-      setAttachedDoc({
-        name: file.name,
-        content: `[Document: ${file.name}] — Document uploaded. In production, text is extracted via server-side OCR. For demo, paste the contract text directly in your message.`,
-        size: file.size,
-      });
-      toast.info("PDF uploaded. For best results, paste the contract text directly too.");
-    }
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  }
-
-  function handleDrop(e: React.DragEvent) {
-    e.preventDefault();
-    const file = e.dataTransfer.files[0];
-    if (!file) return;
-    const fakeEvent = { target: { files: [file] } } as unknown as React.ChangeEvent<HTMLInputElement>;
-    handleFileSelect(fakeEvent);
-  }
+  const isEmpty = messages.length === 0;
 
   return (
-    <div className="flex h-[calc(100vh-0px)] overflow-hidden" onDrop={handleDrop} onDragOver={e => e.preventDefault()}>
-
-      {/* Sidebar — conversation history */}
-      <aside className={`flex-shrink-0 border-r border-[#00BFBF]/10 bg-[#001A33]/60 backdrop-blur flex flex-col transition-all duration-300 ${sidebarOpen ? "w-60" : "w-0 overflow-hidden"}`}>
-        <div className="p-3 border-b border-[#00BFBF]/10">
-          <button onClick={newConversation}
-            className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl bg-[#00BFBF]/10 border border-[#00BFBF]/20 text-sm font-medium text-[#00BFBF] hover:bg-[#00BFBF]/15 transition-colors">
-            <Plus size={16} /> New Chat
-          </button>
+    <div
+      className="flex flex-col h-full bg-[#080f1a]"
+      onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+      onDragLeave={() => setIsDragging(false)}
+      onDrop={(e) => { e.preventDefault(); setIsDragging(false); const f = e.dataTransfer.files[0]; if (f) readFile(f); }}
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-[#172130] flex-shrink-0">
+        <div className="flex items-center gap-2">
+          <Scale size={16} className="text-[#00BFBF]" />
+          <span className="text-sm font-semibold text-[#E0F2F1]">Nexus Legal</span>
+          <span className="text-[10px] font-mono-data text-[#5a7080] tracking-wider uppercase">AI</span>
         </div>
-        <div className="flex-1 overflow-y-auto p-2 space-y-1">
-          {conversations.length === 0 ? (
-            <p className="text-xs text-[#4A5B6A] text-center py-8 px-3">Start a conversation to see history here</p>
-          ) : (
-            conversations.map(conv => (
-              <button key={conv.id} onClick={() => setActiveId(conv.id)}
-                className={`w-full text-left px-3 py-2.5 rounded-xl text-xs transition-all group ${conv.id === activeId ? "bg-[#002B52] border border-[#00BFBF]/20 text-[#E0F2F1]" : "text-[#7A8B99] hover:text-[#E0F2F1] hover:bg-[#002B52]/60 border border-transparent"}`}>
-                <div className="flex items-start gap-2">
-                  <MessageSquare size={12} className="flex-shrink-0 mt-0.5 text-[#00BFBF]" />
-                  <span className="truncate leading-relaxed">{conv.title}</span>
+        <div className="relative">
+          <button
+            onClick={() => setShowTypeSelector(!showTypeSelector)}
+            className="flex items-center gap-1.5 text-xs text-[#5a7080] hover:text-[#E0F2F1] transition-colors px-2.5 py-1.5 rounded-lg border border-[#172130] hover:border-[#00BFBF]/30"
+          >
+            {selectedLabel}
+            <ChevronDown size={12} className={`transition-transform ${showTypeSelector ? "rotate-180" : ""}`} />
+          </button>
+          {showTypeSelector && (
+            <div className="absolute right-0 top-full mt-1 w-44 rounded-xl border border-[#172130] bg-[#0d1829] shadow-2xl z-50 overflow-hidden animate-slide-up">
+              {ANALYSIS_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => { setAnalysisType(opt.value); setShowTypeSelector(false); }}
+                  className={`w-full text-left px-3 py-2 text-xs transition-colors ${
+                    analysisType === opt.value ? "text-[#00BFBF] bg-[#00BFBF]/10" : "text-[#C8E0DC] hover:bg-[#172130]/60"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto px-4 py-6">
+        <div className="max-w-3xl mx-auto space-y-6">
+          {isEmpty ? (
+            <div className="animate-fade-in">
+              <div className="text-center mb-10">
+                <div className="w-14 h-14 rounded-2xl bg-[#00BFBF]/10 border border-[#00BFBF]/20 flex items-center justify-center mx-auto mb-4">
+                  <Scale size={24} className="text-[#00BFBF]" />
                 </div>
-                <p className="text-[10px] text-[#4A5B6A] mt-0.5 ml-[20px]">
-                  {conv.messages.length} message{conv.messages.length !== 1 ? "s" : ""}
+                <h1 className="text-xl font-semibold text-[#E0F2F1] mb-2">Nexus Legal AI</h1>
+                <p className="text-sm text-[#5a7080] max-w-xs mx-auto leading-relaxed">
+                  Upload a contract or ask a legal question. I'll analyze, explain, and help you negotiate.
                 </p>
-              </button>
-            ))
-          )}
-        </div>
-      </aside>
-
-      {/* Main chat area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-
-        {/* Top bar */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-[#00BFBF]/10 flex-shrink-0">
-          <button onClick={() => setSidebarOpen(v => !v)}
-            className="p-1.5 rounded-lg text-[#7A8B99] hover:text-[#00BFBF] hover:bg-[#002B52]/60 transition-colors">
-            <MessageSquare size={18} />
-          </button>
-          <span className="text-sm font-medium text-[#E0F2F1] truncate">
-            {activeConv?.title ?? "Nexus Legal"}
-          </span>
-          {activeConv && (
-            <button onClick={newConversation}
-              className="ml-auto flex items-center gap-1.5 text-xs text-[#7A8B99] hover:text-[#00BFBF] transition-colors flex-shrink-0">
-              <Plus size={14} /> New
-            </button>
-          )}
-        </div>
-
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6">
-          {!activeConv || activeConv.messages.length === 0 ? (
-            <EmptyState onAction={(prompt) => { if (!activeId) newConversation(); setInput(prompt); setTimeout(() => textareaRef.current?.focus(), 50); }} />
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                {QUICK_ACTIONS.map((action) => {
+                  const Icon = action.icon;
+                  return (
+                    <button
+                      key={action.label}
+                      onClick={() => send(action.prompt)}
+                      className="flex flex-col items-start gap-2 p-3.5 rounded-xl border border-[#172130] bg-[#0d1829]/40
+                        hover:border-[#00BFBF]/30 hover:bg-[#0d1829]/80 transition-all text-left group"
+                    >
+                      <Icon size={15} className={action.color} />
+                      <span className="text-xs font-medium text-[#C8E0DC] group-hover:text-[#E0F2F1] transition-colors leading-tight">
+                        {action.label}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-center text-[10px] text-[#5a7080] mt-5">
+                Drop a PDF or text file anywhere, or click the attach button below
+              </p>
+            </div>
           ) : (
-            <>
-              {activeConv.messages.map((msg) =>
-                msg.role === "user"
-                  ? <UserMessage key={msg.id} msg={msg} />
-                  : <AssistantMessage key={msg.id} msg={msg} isLatest={msg.id === latestMsgId} />
-              )}
-              {sendMutation.isPending && (
-                <div className="flex gap-3">
-                  <div className="w-8 h-8 rounded-full bg-[#00BFBF]/15 border border-[#00BFBF]/30 flex items-center justify-center flex-shrink-0">
-                    <Scale size={14} className="text-[#00BFBF]" />
-                  </div>
-                  <div className="bg-[#002B52]/50 border border-[#00BFBF]/10 rounded-2xl rounded-tl-sm px-4 py-3">
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-1.5 h-1.5 rounded-full bg-[#00BFBF] animate-bounce" style={{ animationDelay: "0ms" }} />
-                      <div className="w-1.5 h-1.5 rounded-full bg-[#00BFBF] animate-bounce" style={{ animationDelay: "150ms" }} />
-                      <div className="w-1.5 h-1.5 rounded-full bg-[#00BFBF] animate-bounce" style={{ animationDelay: "300ms" }} />
-                    </div>
-                  </div>
-                </div>
-              )}
-              <div ref={bottomRef} />
-            </>
+            messages.map((msg) => <MessageBubble key={msg.id} msg={msg} />)
           )}
+          {isTyping && <TypingIndicator />}
+          <div ref={bottomRef} />
         </div>
+      </div>
 
-        {/* Input area */}
-        <div className="flex-shrink-0 px-4 pb-4 pt-2">
-          {/* Attached document pill */}
-          {attachedDoc && (
-            <div className="flex items-center gap-2 mb-2 px-3 py-2 bg-[#002B52]/60 border border-[#00BFBF]/20 rounded-xl w-fit max-w-full">
-              <FileText size={14} className="text-[#00BFBF] flex-shrink-0" />
-              <span className="text-xs text-[#E0F2F1] truncate max-w-[200px]">{attachedDoc.name}</span>
-              <span className="text-[10px] text-[#7A8B99]">({(attachedDoc.size / 1024).toFixed(0)} KB)</span>
-              <button onClick={() => setAttachedDoc(null)} className="text-[#7A8B99] hover:text-red-400 transition-colors flex-shrink-0">
-                <X size={13} />
+      {/* Input area */}
+      <div className="flex-shrink-0 px-4 pb-4 pt-2 border-t border-[#172130]">
+        <div className="max-w-3xl mx-auto">
+          {/* Document pill */}
+          {doc && (
+            <div className="flex items-center gap-2 mb-2 px-3 py-1.5 rounded-lg bg-[#00BFBF]/10 border border-[#00BFBF]/20 w-fit max-w-full">
+              <FileText size={12} className="text-[#00BFBF] flex-shrink-0" />
+              <span className="text-xs text-[#00BFBF] truncate max-w-[200px]">{doc.name}</span>
+              <span className="text-[10px] text-[#5a7080] font-mono-data flex-shrink-0">{formatBytes(doc.size)}</span>
+              <button onClick={() => setDoc(null)} className="text-[#5a7080] hover:text-red-400 transition-colors ml-1">
+                <X size={12} />
               </button>
             </div>
           )}
 
-          <div className="relative bg-[#002B52]/60 border border-[#00BFBF]/20 rounded-2xl focus-within:border-[#00BFBF]/50 transition-colors">
+          {/* Drag hint */}
+          {isDragging && (
+            <div className="flex items-center justify-center h-14 rounded-xl border-2 border-dashed border-[#00BFBF]/60 bg-[#00BFBF]/5 mb-2 animate-fade-in">
+              <p className="text-sm text-[#00BFBF]">Drop document to attach</p>
+            </div>
+          )}
+
+          <div className="flex items-end gap-2 p-2 rounded-xl border border-[#172130] bg-[#0d1829]/80
+            focus-within:border-[#00BFBF]/40 focus-within:ring-1 focus-within:ring-[#00BFBF]/20 transition-all">
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="p-2 rounded-lg text-[#5a7080] hover:text-[#00BFBF] hover:bg-[#00BFBF]/10 transition-colors flex-shrink-0"
+              title="Attach document (PDF, TXT)"
+            >
+              <Paperclip size={16} />
+            </button>
+
             <textarea
               ref={textareaRef}
               value={input}
-              onChange={e => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Ask anything about a contract, or describe the document you want to generate…"
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(input); } }}
+              onInput={(e) => {
+                const t = e.currentTarget;
+                t.style.height = "auto";
+                t.style.height = `${Math.min(t.scrollHeight, 160)}px`;
+              }}
+              placeholder="Ask a legal question or describe your contract…"
               rows={1}
-              className="w-full bg-transparent text-sm text-[#E0F2F1] placeholder-[#4A5B6A] resize-none outline-none px-4 pt-3.5 pb-12 max-h-[180px] leading-relaxed"
+              className="flex-1 resize-none bg-transparent text-sm text-[#E0F2F1] placeholder-[#5a7080]
+                focus:outline-none py-1.5 leading-relaxed max-h-40 overflow-y-auto"
+              style={{ minHeight: "36px" }}
             />
-            <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
-              <div className="flex items-center gap-1">
-                <button onClick={() => fileInputRef.current?.click()}
-                  className="p-1.5 rounded-lg text-[#7A8B99] hover:text-[#00BFBF] hover:bg-[#00BFBF]/10 transition-colors"
-                  title="Attach document">
-                  <Paperclip size={16} />
-                </button>
-                <span className="text-[10px] text-[#4A5B6A]">PDF, TXT, MD · max 5MB</span>
-              </div>
-              <button onClick={() => send()}
-                disabled={!input.trim() || sendMutation.isPending}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#00BFBF] text-[#001A33] text-xs font-semibold hover:bg-[#00BFBF]/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all">
-                {sendMutation.isPending ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />}
-                {sendMutation.isPending ? "Analyzing…" : "Send"}
-              </button>
-            </div>
+
+            <button
+              onClick={() => send(input)}
+              disabled={!input.trim() || sendMutation.isPending}
+              className="p-2 rounded-lg bg-[#00BFBF] text-[#080f1a] hover:bg-[#00DFDF]
+                disabled:opacity-30 disabled:cursor-not-allowed transition-all flex-shrink-0"
+              title="Send (Enter)"
+            >
+              {sendMutation.isPending
+                ? <Loader2 size={16} className="animate-spin" />
+                : <Send size={16} />}
+            </button>
           </div>
 
-          <p className="text-center text-[10px] text-[#3A4B59] mt-2">
-            Legal analysis only — not legal advice · Always verify with a qualified attorney
+          <p className="text-[10px] text-[#5a7080] text-center mt-2">
+            Legal analysis only — not legal advice.{" "}
+            <span className="opacity-60">Consult a qualified attorney before acting.</span>
           </p>
         </div>
       </div>
 
-      <input ref={fileInputRef} type="file" accept=".txt,.md,.pdf,.docx" className="hidden" onChange={handleFileSelect} />
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".pdf,.txt,.md,.doc,.docx"
+        className="hidden"
+        onChange={(e) => { const f = e.target.files?.[0]; if (f) readFile(f); e.target.value = ""; }}
+      />
     </div>
   );
 }

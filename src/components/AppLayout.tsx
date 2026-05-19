@@ -1,18 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { useAuth } from "@/hooks/useAuth";
 import {
-  LayoutDashboard, FileText, Settings, LogOut, ChevronLeft, ChevronRight,
-  Menu, X, Scale, Shield, Layers, Wand2, MessageSquare,
+  MessageSquare, FileText, Settings, LogOut, Scale,
+  PanelLeft, PanelLeftClose, Plus,
 } from "lucide-react";
 
 const navItems = [
-  { path: "/chat", icon: MessageSquare, label: "Chat" },
-  { path: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+  { path: "/", icon: MessageSquare, label: "Chat" },
   { path: "/documents", icon: FileText, label: "Documents" },
-  { path: "/review", icon: Shield, label: "Review" },
-  { path: "/batch-review", icon: Layers, label: "Batch Review" },
-  { path: "/generate", icon: Wand2, label: "Generate" },
   { path: "/settings", icon: Settings, label: "Settings" },
 ];
 
@@ -21,56 +17,117 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
-
-  useEffect(() => { setMobileOpen(false); }, [location.pathname]);
 
   return (
-    <div className="relative min-h-screen flex" style={{ zIndex: 1 }}>
-      {mobileOpen && <div className="fixed inset-0 bg-black/60 z-40 lg:hidden" onClick={() => setMobileOpen(false)} />}
-      <button onClick={() => setMobileOpen(!mobileOpen)}
-        className="fixed top-4 left-4 z-50 lg:hidden p-2 rounded-lg bg-[#002B52]/80 border border-[#00BFBF]/20 text-[#E0F2F1]">
-        {mobileOpen ? <X size={20} /> : <Menu size={20} />}
-      </button>
-      <aside className={`fixed lg:sticky top-0 left-0 h-screen z-40 flex flex-col border-r border-[#00BFBF]/10 transition-all duration-300 ease-in-out ${collapsed ? "w-20" : "w-64"} ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"} bg-[#001A33]/90 backdrop-blur-xl`}>
-        <div className={`flex items-center gap-3 px-4 py-5 border-b border-[#00BFBF]/10 ${collapsed ? "justify-center" : ""}`}>
-          <Scale className="w-8 h-8 text-[#00BFBF] flex-shrink-0" />
-          {!collapsed && (<div><h1 className="text-lg font-semibold text-[#E0F2F1] tracking-tight">Nexus Legal</h1><p className="text-[10px] text-[#7A8B99] font-mono-data tracking-wider">AI LEGAL PLATFORM</p></div>)}
+    <div className="flex h-screen bg-[#080f1a] overflow-hidden">
+      {/* Sidebar */}
+      <aside
+        className={`flex flex-col flex-shrink-0 border-r border-[#172130] transition-all duration-200 ease-in-out
+          ${collapsed ? "w-[60px]" : "w-[220px]"}
+          bg-[#07101a]/95 backdrop-blur-xl`}
+      >
+        {/* Logo + collapse */}
+        <div className={`flex items-center gap-2.5 px-3 py-4 border-b border-[#172130] ${collapsed ? "justify-center" : "justify-between"}`}>
+          {!collapsed && (
+            <div className="flex items-center gap-2 min-w-0">
+              <Scale className="w-5 h-5 text-[#00BFBF] flex-shrink-0" />
+              <span className="text-sm font-semibold text-[#E0F2F1] truncate">Nexus Legal</span>
+            </div>
+          )}
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            className="p-1.5 rounded-lg text-[#5a7080] hover:text-[#00BFBF] hover:bg-[#00BFBF]/10 transition-colors"
+            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {collapsed ? <PanelLeft size={16} /> : <PanelLeftClose size={16} />}
+          </button>
         </div>
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+
+        {/* New chat button */}
+        <div className="px-2 pt-3 pb-1">
+          <button
+            onClick={() => navigate("/")}
+            className={`flex items-center gap-2 w-full px-2.5 py-2 rounded-lg text-xs font-medium
+              bg-[#00BFBF]/10 text-[#00BFBF] border border-[#00BFBF]/20
+              hover:bg-[#00BFBF]/20 transition-colors
+              ${collapsed ? "justify-center" : ""}`}
+            title="New chat"
+          >
+            <Plus size={14} />
+            {!collapsed && <span>New Chat</span>}
+          </button>
+        </div>
+
+        {/* Nav items */}
+        <nav className="flex-1 px-2 py-2 space-y-0.5 overflow-y-auto">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
             const Icon = item.icon;
             return (
-              <Link key={item.path} to={item.path}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group ${isActive ? "bg-[#00BFBF]/15 text-[#00BFBF] border border-[#00BFBF]/20" : "text-[#7A8B99] hover:text-[#E0F2F1] hover:bg-[#002B52]/60 border border-transparent"} ${collapsed ? "justify-center" : ""}`}>
-                <Icon size={20} className={`flex-shrink-0 ${isActive ? "text-[#00BFBF]" : "group-hover:text-[#00BFBF]"}`} />
+              <Link
+                key={item.path}
+                to={item.path}
+                title={collapsed ? item.label : undefined}
+                className={`flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm font-medium transition-all duration-150
+                  ${isActive
+                    ? "bg-[#00BFBF]/15 text-[#00BFBF] border border-[#00BFBF]/20"
+                    : "text-[#5a7080] hover:text-[#E0F2F1] hover:bg-[#172130]/60 border border-transparent"
+                  }
+                  ${collapsed ? "justify-center" : ""}`}
+              >
+                <Icon size={17} className="flex-shrink-0" />
                 {!collapsed && <span>{item.label}</span>}
-                {isActive && !collapsed && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-[#00BFBF] animate-pulse" />}
               </Link>
             );
           })}
         </nav>
-        <button onClick={() => setCollapsed(!collapsed)}
-          className="hidden lg:flex items-center justify-center py-3 border-t border-[#00BFBF]/10 text-[#7A8B99] hover:text-[#00BFBF] transition-colors">
-          {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
-        </button>
-        <div className="p-3 border-t border-[#00BFBF]/10">
+
+        {/* User row */}
+        <div className="p-2 border-t border-[#172130]">
           {user ? (
-            <div className={`flex items-center gap-3 ${collapsed ? "justify-center" : ""}`}>
-              {user.avatar ? <img src={user.avatar} alt="" className="w-9 h-9 rounded-full border border-[#00BFBF]/30 flex-shrink-0" />
-                : <div className="w-9 h-9 rounded-full bg-[#00BFBF]/20 border border-[#00BFBF]/30 flex items-center justify-center flex-shrink-0"><span className="text-xs font-semibold text-[#00BFBF]">{(user.name ?? "U").charAt(0).toUpperCase()}</span></div>}
-              {!collapsed && (<div className="flex-1 min-w-0"><p className="text-sm font-medium text-[#E0F2F1] truncate">{user.name ?? "User"}</p><p className="text-xs text-[#7A8B99] truncate">{user.email ?? ""}</p></div>)}
-              {!collapsed && <button onClick={logout} className="p-1.5 rounded-lg text-[#7A8B99] hover:text-red-400 hover:bg-red-400/10 transition-colors" title="Logout"><LogOut size={16} /></button>}
+            <div className={`flex items-center gap-2 ${collapsed ? "justify-center" : ""}`}>
+              {user.avatar
+                ? <img src={user.avatar} alt="" className="w-7 h-7 rounded-full border border-[#00BFBF]/30 flex-shrink-0" />
+                : (
+                  <div className="w-7 h-7 rounded-full bg-[#00BFBF]/20 border border-[#00BFBF]/30 flex items-center justify-center flex-shrink-0">
+                    <span className="text-[10px] font-semibold text-[#00BFBF]">
+                      {(user.name ?? "U").charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                )
+              }
+              {!collapsed && (
+                <>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-[#E0F2F1] truncate">{user.name ?? "User"}</p>
+                    <p className="text-[10px] text-[#5a7080] truncate">{user.email ?? ""}</p>
+                  </div>
+                  <button
+                    onClick={logout}
+                    className="p-1.5 rounded-lg text-[#5a7080] hover:text-red-400 hover:bg-red-400/10 transition-colors"
+                    title="Sign out"
+                  >
+                    <LogOut size={14} />
+                  </button>
+                </>
+              )}
             </div>
           ) : (
-            <button onClick={() => navigate("/login")} className={`flex items-center gap-2 px-3 py-2 rounded-xl bg-[#00BFBF]/15 text-[#00BFBF] text-sm font-medium hover:bg-[#00BFBF]/25 transition-colors border border-[#00BFBF]/20 w-full ${collapsed ? "justify-center" : ""}`}>
-              <LogOut size={16} />{!collapsed && <span>Sign In</span>}
+            <button
+              onClick={() => navigate("/login")}
+              className={`flex items-center gap-2 px-2.5 py-2 rounded-lg bg-[#00BFBF]/10 text-[#00BFBF]
+                text-xs font-medium hover:bg-[#00BFBF]/20 transition-colors border border-[#00BFBF]/20 w-full
+                ${collapsed ? "justify-center" : ""}`}
+            >
+              <LogOut size={14} />
+              {!collapsed && <span>Sign In</span>}
             </button>
           )}
         </div>
       </aside>
-      <main className="flex-1 min-w-0 overflow-x-hidden">{children}</main>
+
+      {/* Main content */}
+      <main className="flex-1 min-w-0 overflow-hidden">{children}</main>
     </div>
   );
 }

@@ -1,0 +1,85 @@
+import os
+import logging
+from anthropic import Anthropic
+from .schema import ContractReview
+from .prompts import SYSTEM_PROMPT, build_user_prompt
+
+logger = logging.getLogger(__name__)
+
+MODEL = "claude-opus-4-8"
+MAX_TOKENS = 16000
+MAX_PDF_BYTES = 32 * 1024 * 1024  # 32MB decoded
+
+
+class LegalAgent:
+    def __init__(self, client: Anthropic | None = None):
+        self.client = client or Anthropic()
+
+    def review(
+        self,
+        contract_text: str,
+        jurisdiction: str | None = None,
+        party_role: str | None = None,
+    ) -> ContractReview:
+        logger.info("Reviewing text contract (%d chars)", len(contract_text))
+        response = self.client.messages.parse(
+            model=MODEL,
+            max_tokens=MAX_TOKENS,
+            thinking={"type": "adaptive"},
+            output_config={"effort": "high"},
+            system=SYSTEM_PROMPT,
+            messages=[
+                {"role": "user", "content": build_user_prompt(contract_text, jurisdiction, party_role)}
+            ],
+            output_format=ContractReview,
+        )
+        return response.parsed_output
+
+    def review_pdf(
+        self,
+        pdf_base64: str,
+        jurisdiction: str | None = None,
+        party_role: str | None = None,
+    ) -> ContractReview:
+        # Defensive size check (Pydantic already enforces min, not max — base64 is ~1.37x decoded size)
+        approx_decoded = (len(pdf_base64) * 3) // 4
+        if approx_decoded > MAX_PDF_BYTES:
+            raise ValueError(f"PDF exceeds {MAX_PDF_BYTES // (1024*1024)}MB limit")
+
+        logger.info("Reviewing PDF contract (~%d KB decoded)", approx_decoded // 1024)
+
+        context_parts = []
+        if jurisdiction:
+            context_parts.append(f"Jurisdiction: {jurisdiction}")
+        if party_role:
+            context_parts.append(f"Reviewing party role: {party_role}")
+        instruction = "\n".join(context_parts)
+        if instruction:
+            instruction += "\n\n---\n\n"
+        instruction += "Review the attached contract PDF."
+
+        response = self.client.messages.parse(
+            model=MODEL,
+            max_tokens=MAX_TOKENS,
+            thinking={"type": "adaptive"},
+            output_config={"effort": "high"},
+            system=SYSTEM_PROMPT,
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "document",
+                            "source": {
+                                "type": "base64",
+                                "media_type": "application/pdf",
+                                "data": pdf_base64,
+                            },
+                        },
+                        {"type": "text", "text": instruction},
+                    ],
+                }
+            ],
+            output_format=ContractReview,
+        )
+        return response.parsed_output

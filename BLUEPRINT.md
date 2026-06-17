@@ -1,8 +1,8 @@
 # legal-ai-agent — Blueprint
 
-**Version:** 0.1.0
-**Date:** 2026-06-15
-**Status:** v0 scaffold — contract review MVP
+**Version:** 0.2.0
+**Date:** 2026-06-17
+**Status:** v0 scaffold + auth
 
 ## Mission
 
@@ -40,7 +40,7 @@ client → FastAPI (api/app.py)
 - [ ] Persistent review history (SQLite → Postgres)
 - [ ] Multi-contract comparison endpoint
 - [ ] Citations/quote-anchoring to source text
-- [ ] Auth (API key middleware)
+- [x] Auth (API key middleware) — `X-API-Key` header, env-configured allowlist, constant-time compare
 
 ## API contract
 
@@ -99,3 +99,4 @@ Same response shape; request body:
 | Version | Date       | Changes |
 |---------|------------|---------|
 | 0.1.0   | 2026-06-15 | Initial scaffold: contract review agent, FastAPI, Docker ARM64, Fly.io, CI |
+| 0.2.0   | 2026-06-17 | API key auth on `/review*` via `X-API-Key`; `API_KEYS` env allowlist; `/health` stays open |

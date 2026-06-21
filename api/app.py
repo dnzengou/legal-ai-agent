@@ -4,6 +4,7 @@ from fastapi import Depends, FastAPI, HTTPException
 from anthropic import APIError, AuthenticationError, RateLimitError, BadRequestError
 
 from api.auth import require_api_key
+from api.rate_limit import rate_limit
 from src.agent import LegalAgent
 from src.schema import ContractReview, ReviewRequest, ReviewPdfRequest
 
@@ -27,7 +28,7 @@ def health() -> dict:
     return {"status": "ok", "version": "0.1.0"}
 
 
-@app.post("/review", response_model=ContractReview, dependencies=[Depends(require_api_key)])
+@app.post("/review", response_model=ContractReview, dependencies=[Depends(rate_limit), Depends(require_api_key)])
 def review(req: ReviewRequest) -> ContractReview:
     try:
         return agent.review(req.contract_text, req.jurisdiction, req.party_role)
@@ -43,7 +44,7 @@ def review(req: ReviewRequest) -> ContractReview:
         raise HTTPException(status_code=502, detail=f"Upstream error: {e.message}")
 
 
-@app.post("/review-pdf", response_model=ContractReview, dependencies=[Depends(require_api_key)])
+@app.post("/review-pdf", response_model=ContractReview, dependencies=[Depends(rate_limit), Depends(require_api_key)])
 def review_pdf(req: ReviewPdfRequest) -> ContractReview:
     try:
         return agent.review_pdf(req.pdf_base64, req.jurisdiction, req.party_role)

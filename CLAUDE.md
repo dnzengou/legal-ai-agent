@@ -18,6 +18,7 @@ Contract review agent. FastAPI service that ingests contracts (text or PDF), ext
 ```
 api/app.py          FastAPI app: /health, /review, /review-pdf
 api/auth.py         X-API-Key header dependency
+api/rate_limit.py   Per-IP token bucket limiter
 src/agent.py        LegalAgent class — single review() entrypoint
 src/prompts.py      System prompt + JSON schema
 src/schema.py       Pydantic models for request/response
@@ -43,6 +44,9 @@ fly deploy
 
 - `ANTHROPIC_API_KEY` — required
 - `API_KEYS` — comma-separated client API key allowlist (checked against `X-API-Key` header on `/review*`). Empty disables auth (dev only).
+- `RATE_LIMIT_PER_MIN` — sustained requests/min per client IP on `/review*` (default 30; 0 disables)
+- `RATE_LIMIT_BURST` — burst capacity for the token bucket (default 60)
+- `TRUST_PROXY_HEADERS` — when truthy, key limiter on first `X-Forwarded-For` hop. Enable behind Fly.io / a reverse proxy.
 - `PORT` — defaults to 8000
 - `LOG_LEVEL` — defaults to INFO
 

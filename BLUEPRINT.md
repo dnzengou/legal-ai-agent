@@ -1,8 +1,8 @@
 # legal-ai-agent — Blueprint
 
-**Version:** 0.2.0
-**Date:** 2026-06-17
-**Status:** v0 scaffold + auth
+**Version:** 0.3.0
+**Date:** 2026-06-18
+**Status:** v0 scaffold + auth + rate limit
 
 ## Mission
 
@@ -36,7 +36,7 @@ client → FastAPI (api/app.py)
 - [x] GitHub Actions CI → GHCR
 - [x] Smoke tests with mocked Anthropic client
 - [ ] Streaming endpoint for long contracts (`/review-stream`)
-- [ ] Rate limiting (per-IP, in-memory token bucket)
+- [x] Rate limiting (per-IP, in-memory token bucket) — env-tunable burst/refill, trusts `X-Forwarded-For` only when `TRUST_PROXY_HEADERS` is set
 - [ ] Persistent review history (SQLite → Postgres)
 - [ ] Multi-contract comparison endpoint
 - [ ] Citations/quote-anchoring to source text
@@ -100,3 +100,4 @@ Same response shape; request body:
 |---------|------------|---------|
 | 0.1.0   | 2026-06-15 | Initial scaffold: contract review agent, FastAPI, Docker ARM64, Fly.io, CI |
 | 0.2.0   | 2026-06-17 | API key auth on `/review*` via `X-API-Key`; `API_KEYS` env allowlist; `/health` stays open |
+| 0.3.0   | 2026-06-18 | Per-IP token bucket rate limit on `/review*`; `RATE_LIMIT_PER_MIN`/`RATE_LIMIT_BURST`/`TRUST_PROXY_HEADERS` env |

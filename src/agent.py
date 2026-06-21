@@ -11,6 +11,25 @@ MAX_TOKENS = 16000
 MAX_PDF_BYTES = 32 * 1024 * 1024  # 32MB decoded
 
 
+def _anchor_clauses(review: ContractReview, source: str) -> ContractReview:
+    """Set char_start/char_end on each KeyClause by exact substring match into source.
+    Excerpts not found in source get null offsets and a logged warning."""
+    unanchored = 0
+    for clause in review.key_clauses:
+        idx = source.find(clause.text_excerpt)
+        if idx >= 0:
+            clause.char_start = idx
+            clause.char_end = idx + len(clause.text_excerpt)
+        else:
+            clause.char_start = None
+            clause.char_end = None
+            unanchored += 1
+    if unanchored:
+        logger.warning("%d/%d key clauses had non-verbatim excerpts and could not be anchored",
+                       unanchored, len(review.key_clauses))
+    return review
+
+
 class LegalAgent:
     def __init__(self, client: Anthropic | None = None):
         self.client = client or Anthropic()
@@ -33,7 +52,7 @@ class LegalAgent:
             ],
             output_format=ContractReview,
         )
-        return response.parsed_output
+        return _anchor_clauses(response.parsed_output, contract_text)
 
     def review_pdf(
         self,

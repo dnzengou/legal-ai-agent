@@ -47,6 +47,7 @@ fly deploy
 - `RATE_LIMIT_PER_MIN` — sustained requests/min per client IP on `/review*` (default 30; 0 disables)
 - `RATE_LIMIT_BURST` — burst capacity for the token bucket (default 60)
 - `TRUST_PROXY_HEADERS` — when truthy, key limiter on first `X-Forwarded-For` hop. Enable behind Fly.io / a reverse proxy.
+- `CORS_ORIGINS` — comma-separated allowed origins. Empty disables CORS.
 - `PORT` — defaults to 8000
 - `LOG_LEVEL` — defaults to INFO
 

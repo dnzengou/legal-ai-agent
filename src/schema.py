@@ -6,6 +6,8 @@ class KeyClause(BaseModel):
     type: str = Field(description="Clause type, e.g. 'termination', 'indemnification', 'limitation_of_liability'")
     summary: str = Field(description="Plain-English summary of the clause")
     text_excerpt: str = Field(description="Verbatim excerpt from the contract, max 500 chars")
+    char_start: int | None = Field(default=None, description="Server-filled: start offset of text_excerpt in source contract (null for PDFs or non-verbatim quotes)")
+    char_end: int | None = Field(default=None, description="Server-filled: end offset of text_excerpt in source contract")
 
 
 class Risk(BaseModel):

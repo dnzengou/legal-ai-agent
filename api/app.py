@@ -1,6 +1,7 @@
 import os
 import logging
 from fastapi import Depends, FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from anthropic import APIError, AuthenticationError, RateLimitError, BadRequestError
 
 from api.auth import require_api_key
@@ -16,16 +17,28 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="legal-ai-agent",
-    version="0.1.0",
+    version="0.5.0",
     description="Contract review API powered by Claude",
 )
+
+_cors_origins = [o.strip() for o in os.getenv("CORS_ORIGINS", "").split(",") if o.strip()]
+if _cors_origins:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=_cors_origins,
+        allow_methods=["GET", "POST", "OPTIONS"],
+        allow_headers=["Content-Type", "X-API-Key"],
+        allow_credentials=False,
+        max_age=600,
+    )
+    logger.info("CORS enabled for %d origin(s)", len(_cors_origins))
 
 agent = LegalAgent()
 
 
 @app.get("/health")
 def health() -> dict:
-    return {"status": "ok", "version": "0.1.0"}
+    return {"status": "ok", "version": "0.5.0"}
 
 
 @app.post("/review", response_model=ContractReview, dependencies=[Depends(rate_limit), Depends(require_api_key)])

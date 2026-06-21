@@ -13,7 +13,7 @@ Risk severity rubric:
 - MEDIUM: short cure periods, narrow termination rights, exclusive remedies, broad force majeure, choice of foreign jurisdiction without arbitration, ambiguous payment terms
 - LOW: standard boilerplate that could be tightened, missing definitions, inconsistent capitalization of defined terms
 
-Quote verbatim excerpts (max 500 chars each) — do not paraphrase clause text. Reference clauses by section number when available, otherwise by heading.
+Quote verbatim excerpts (max 500 chars each) — do not paraphrase clause text. The system anchors each excerpt back to the source by exact substring match, so character-level fidelity matters: do not normalize whitespace, fix typos, or shorten quotes. Leave `char_start` and `char_end` as null; the server fills them. Reference clauses by section number when available, otherwise by heading.
 
 If jurisdiction or party_role is provided, tailor your risk analysis accordingly (e.g. UCC for US-state commercial contracts, GDPR for EU data terms)."""
 

@@ -7,7 +7,7 @@ Contract review agent. FastAPI service that ingests contracts (text or PDF), ext
 - **Language:** Python 3.12
 - **API:** FastAPI + Uvicorn
 - **LLM:** Anthropic SDK (`anthropic`), model `claude-opus-4-8`, adaptive thinking, `effort: high`
-- **Output shape:** structured outputs via `output_config.format` (json_schema)
+- **Output shape:** structured outputs via `output_config.format` (json_schema); server-owned safety score, letter grade, and citation offsets
 - **PDF:** native Claude PDF support via `document` content block (base64 source)
 - **Container:** Docker, ARM64 multi-arch
 - **Deploy:** Fly.io (`fly.toml`)
@@ -16,14 +16,15 @@ Contract review agent. FastAPI service that ingests contracts (text or PDF), ext
 ## Layout
 
 ```
-api/app.py          FastAPI app: /health, /review, /review-pdf
+api/app.py          FastAPI app: /, /health, /review, /review-pdf + observability/security middleware
 api/auth.py         X-API-Key header dependency
 api/rate_limit.py   Per-IP token bucket limiter
 src/agent.py        LegalAgent class — single review() entrypoint
 src/prompts.py      System prompt + JSON schema
 src/schema.py       Pydantic models for request/response
-tests/test_agent.py Smoke tests (no network — mocked client)
-Dockerfile          ARM64 multi-arch image
+src/scoring.py      Deterministic safety score (0-100) + letter grade (A-F)
+tests/              Smoke + scoring + app + auth + rate-limit + anchoring tests (no network — mocked client)
+Dockerfile          ARM64 multi-arch image (Python 3.12 / uvicorn)
 fly.toml            Fly.io machine config (512mb, shared cpu)
 ```
 
@@ -58,6 +59,7 @@ fly deploy
 - Stream responses if `max_tokens > 16000`
 - Use `client.messages.parse()` for structured outputs (auto-validates)
 - Errors: surface as HTTP 4xx/5xx with sanitized messages, never echo API keys
+- Verifiable values (safety score, citation offsets) are computed server-side, never trusted from the model — the model proposes, the server owns the number
 
 ## Roadmap
 

@@ -1,8 +1,8 @@
 # legal-ai-agent — Blueprint
 
-**Version:** 0.5.0
-**Date:** 2026-06-19
-**Status:** v0 scaffold + auth + rate limit + citations + CORS + landing page + GTM
+**Version:** 0.6.0
+**Date:** 2026-06-28
+**Status:** v0 scaffold + auth + rate limit + citations + CORS + landing page + GTM + safety scoring + compliance flags + prod hardening
 
 ## Mission
 
@@ -40,6 +40,9 @@ client → FastAPI (api/app.py)
 - [ ] Persistent review history (SQLite → Postgres)
 - [ ] Multi-contract comparison endpoint
 - [x] Citations/quote-anchoring to source text — server-filled `char_start`/`char_end` on each key clause via exact substring match (text path only; PDFs leave offsets null)
+- [x] Safety score (0–100) + letter grade (A–F) — server-computed deterministically from risks (`src/scoring.py`); never trusted from the model
+- [x] Compliance flags — model-assessed per-framework status (GDPR/CCPA/HIPAA/PCI-DSS/SOC2) with notes
+- [x] Production hardening — request-id tracing, access logging with latency, security headers, GZip, sanitized catch-all 500, root `/` endpoint
 - [x] Auth (API key middleware) — `X-API-Key` header, env-configured allowlist, constant-time compare
 - [x] CORS — env-controlled allowed-origin list (`CORS_ORIGINS`), `GET`/`POST`/`OPTIONS`, no credentials
 - [x] Landing page (`site/`) — WCAG 2.2 AA, semantic HTML, prefers-color-scheme/reduced-motion/forced-colors, 3-tier pricing
@@ -89,7 +92,12 @@ Response:
   "risks": [
     { "severity": "low|medium|high", "category": "string", "description": "string", "clause_ref": "string" }
   ],
-  "recommendations": ["string"]
+  "compliance_flags": [
+    { "framework": "GDPR|CCPA|HIPAA|PCI-DSS|SOC2|...", "status": "compliant|gap|not_applicable|unclear", "note": "string" }
+  ],
+  "recommendations": ["string"],
+  "safety_score": "int 0-100 (server-computed from risks)",
+  "letter_grade": "A|B|C|D|F (server-derived from safety_score)"
 }
 ```
 
@@ -124,6 +132,7 @@ Same response shape; request body:
 | 0.3.0   | 2026-06-18 | Per-IP token bucket rate limit on `/review*`; `RATE_LIMIT_PER_MIN`/`RATE_LIMIT_BURST`/`TRUST_PROXY_HEADERS` env |
 | 0.4.0   | 2026-06-19 | Citations: `char_start`/`char_end` on each `KeyClause`, server-filled via exact substring match against source text |
 | 0.5.0   | 2026-06-19 | Landing page (`site/`, WCAG 2.2 AA), GTM playbook, CORS via `CORS_ORIGINS`, README rewrite, Distribution Channels table |
+| 0.6.0   | 2026-06-28 | Safety score (0–100) + letter grade (A–F) computed server-side from risks; per-framework compliance flags; production hardening (request-id tracing, access logs, security headers, GZip, sanitized 500, root `/`); fixed corrupted Dockerfile (was building the Node frontend, not the FastAPI service) |
 # Nexus Legal — Blueprint v4.0
 
 > "ChatGPT for Legal Work" — lean, chat-first, accessible, installable AI legal platform.

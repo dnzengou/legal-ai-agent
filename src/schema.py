@@ -17,6 +17,14 @@ class Risk(BaseModel):
     clause_ref: str = Field(description="Reference to the source clause (section number or heading)")
 
 
+class ComplianceFlag(BaseModel):
+    framework: str = Field(description="Regulatory framework, e.g. 'GDPR', 'CCPA', 'HIPAA', 'PCI-DSS', 'SOC2'")
+    status: Literal["compliant", "gap", "not_applicable", "unclear"] = Field(
+        description="Whether the contract satisfies, gaps, or does not implicate this framework"
+    )
+    note: str = Field(description="What was found (or missing) and why it matters for this framework")
+
+
 class ContractReview(BaseModel):
     summary: str = Field(description="2-3 sentence executive summary of the contract")
     parties: list[str] = Field(description="Legal names of all parties")
@@ -24,7 +32,19 @@ class ContractReview(BaseModel):
     term: str | None = Field(default=None, description="Duration / term description or null")
     key_clauses: list[KeyClause]
     risks: list[Risk]
+    compliance_flags: list[ComplianceFlag] = Field(
+        default_factory=list,
+        description="Regulatory compliance assessment across frameworks implicated by the contract",
+    )
     recommendations: list[str] = Field(description="Actionable recommendations for the reviewing party")
+    safety_score: int | None = Field(
+        default=None,
+        description="Server-filled: 0-100 safety score computed from risks (null in model output; the server sets it)",
+    )
+    letter_grade: str | None = Field(
+        default=None,
+        description="Server-filled: A-F grade derived from safety_score (null in model output; the server sets it)",
+    )
 
 
 class ReviewRequest(BaseModel):

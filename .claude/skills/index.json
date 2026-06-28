@@ -1,0 +1,53 @@
+{
+  "version": "0.1.0",
+  "skills": [
+    {
+      "id": "arm",
+      "name": "ARM Sprint",
+      "file": "arm.md",
+      "category": "methodology",
+      "tags": ["sprint", "acceleration", "resilience", "maturity"],
+      "overlay": true
+    },
+    {
+      "id": "rrss",
+      "name": "R²S² Quality Discipline",
+      "file": "rrss.md",
+      "category": "quality",
+      "tags": ["robust", "reliable", "solid", "stable", "resistant", "scalable", "secure", "systematic"],
+      "overlay": true
+    },
+    {
+      "id": "kafca",
+      "name": "KafCa Token-Efficiency",
+      "file": "kafca.md",
+      "category": "communication",
+      "tags": ["karpathy", "fixclaude", "caveman", "terse"],
+      "overlay": true
+    },
+    {
+      "id": "kafcade",
+      "name": "KafCade Multi-Project DevFlow",
+      "file": "kafcade.md",
+      "category": "workflow",
+      "tags": ["devflow", "multi-project", "subagent", "cascade"],
+      "overlay": false
+    },
+    {
+      "id": "devflow",
+      "name": "DevFlow Pipeline",
+      "file": "devflow.md",
+      "category": "workflow",
+      "tags": ["build", "integrate", "improve", "evaluate", "consolidate", "blueprint", "push", "deploy"],
+      "overlay": false
+    },
+    {
+      "id": "evolve",
+      "name": "EvoMetaClaw Evolutionary SkillOpt",
+      "file": "evolve.md",
+      "category": "meta",
+      "tags": ["evolution", "meta-learning", "skill-injection", "memory"],
+      "overlay": true
+    }
+  ]
+}

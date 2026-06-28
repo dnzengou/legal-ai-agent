@@ -61,6 +61,32 @@ fly deploy
 - Errors: surface as HTTP 4xx/5xx with sanitized messages, never echo API keys
 - Verifiable values (safety score, citation offsets) are computed server-side, never trusted from the model — the model proposes, the server owns the number
 
+## Short-command grammar (DevFlow / KafCa / Evolve)
+
+This repo ships composable skills under `.claude/skills/` (also see `COMMANDS.md`).
+When a message is a bare command string — single letters or letters joined by
+`+`, space, `,`, or `→` — interpret it with the DevFlow grammar and invoke the
+matching skill rather than treating it as prose.
+
+| Cmd | Skill | Meaning |
+|-----|-------|---------|
+| `B` | devflow | Build — implement next roadmap item / specified feature |
+| `I` | devflow | Integrate — reflect on changes, sync docs + state |
+| `Im` | devflow | Improve — refactor/optimise/harden, no new features |
+| `E` | devflow | Evaluate — audit quality · security · performance · consistency |
+| `C` | devflow | Consolidate — dedupe, remove dead code, reorganise |
+| `Bl` | devflow | Blueprint — update `BLUEPRINT.md` (preserve past changelogs) |
+| `P` | devflow | Push — staged commit (smart message) + push |
+| `D` | devflow | Deploy — deploy to the detected target, confirm live |
+| `CI` | devflow | Continuous Improve — `I→Im→E→C→Bl→P→D` |
+
+- **Overlays:** `KafCa` (terse Karpathy/fixClaude/Caveman mode — no preamble, minimal code) and `RRSS`/`R²S²` (Robust·Reliable·Solid·Stable·Resistant·Scalable·Secure·Systematic quality gates) prefix any command, e.g. `kafca E+Im`.
+- **Evolve / evo-metaclaw:** evolutionary meta-learning — draw on the EvoForge/MetaClaw concepts (matrix-thinking, population dynamics, circuit breaker, lineage). Skills: `evolved-skillopt-v2/v3-agentic/v4-bio`.
+- **KafCade:** multi-project DevFlow cascade across subagents.
+- Commands are case-insensitive; `+`, space, `,`, `→` are equivalent separators.
+
+Reference decode — the original session command **`KafCa E+Im + Bl. Evolve evo-metaclaw.`** = *in terse KafCa mode: Evaluate → Improve → update Blueprint, then evolve the app using evo-metaclaw (evolutionary meta-learning)* — which is what shipped in v0.6.0.
+
 ## Roadmap
 
 See `BLUEPRINT.md`.

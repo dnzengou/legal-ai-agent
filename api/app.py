@@ -58,6 +58,7 @@ async def observability(request: Request, call_next):
     The request id is read from an inbound X-Request-ID (so a proxy's id is honored)
     or generated, and echoed back on the response for client-side correlation."""
     request_id = request.headers.get("X-Request-ID") or uuid.uuid4().hex
+    request.state.request_id = request_id  # so the exception handler can echo it on 500s
     start = time.monotonic()
     try:
         response = await call_next(request)
@@ -79,9 +80,14 @@ async def observability(request: Request, call_next):
 
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-    """Never leak internals: every unhandled error becomes a generic 500."""
-    logger.exception("Unhandled error on %s %s", request.method, request.url.path)
-    return JSONResponse(status_code=500, content={"detail": "Internal server error"})
+    """Never leak internals: every unhandled error becomes a generic 500.
+
+    Echo the request id (set by the observability middleware) so the sanitized
+    response still correlates to the logged stack trace."""
+    request_id = getattr(request.state, "request_id", None)
+    logger.exception("rid=%s Unhandled error on %s %s", request_id, request.method, request.url.path)
+    headers = {"X-Request-ID": request_id} if request_id else None
+    return JSONResponse(status_code=500, content={"detail": "Internal server error"}, headers=headers)
 
 
 agent = LegalAgent()

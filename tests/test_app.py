@@ -76,7 +76,9 @@ def test_unhandled_error_is_sanitized(monkeypatch, fake_review):
     monkeypatch.setattr(app_module.agent, "review", MagicMock(side_effect=RuntimeError("boom secret")))
     # raise_server_exceptions=False so the registered handler's response is returned.
     client = TestClient(app_module.app, raise_server_exceptions=False)
-    r = client.post("/review", json={"contract_text": "x" * 100})
+    r = client.post("/review", json={"contract_text": "x" * 100}, headers={"X-Request-ID": "trace-err"})
     assert r.status_code == 500
     assert r.json() == {"detail": "Internal server error"}
     assert "boom secret" not in r.text
+    # the request id survives the error path for log correlation
+    assert r.headers.get("X-Request-ID") == "trace-err"

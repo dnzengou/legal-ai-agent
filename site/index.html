@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark light">
+  <title>legal-ai-agent — First-pass contract review in minutes, not hours</title>
+  <meta name="description" content="Open-source contract review API. Ingest a contract (text or PDF), get clauses, risk flags, and citations anchored to the source. Powered by Claude.">
+
+  <meta property="og:title" content="legal-ai-agent — Contract review in minutes">
+  <meta property="og:description" content="Open-source API that extracts clauses, flags risk, and cites the source. Self-host or use the managed tier.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://legal-ai-agent.fly.dev/">
+  <meta name="twitter:card" content="summary">
+
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%234f9fff'/%3E%3Ctext x='16' y='22' font-family='system-ui' font-size='18' font-weight='700' text-anchor='middle' fill='%230a0e14'%3EL%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "legal-ai-agent",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Cross-platform",
+    "offers": [
+      { "@type": "Offer", "name": "Open Source", "price": "0", "priceCurrency": "EUR" },
+      { "@type": "Offer", "name": "Pro", "price": "9.99", "priceCurrency": "EUR" }
+    ],
+    "url": "https://legal-ai-agent.fly.dev/",
+    "codeRepository": "https://github.com/dnzengou/legal-ai-agent",
+    "license": "https://github.com/dnzengou/legal-ai-agent/blob/main/LICENSE"
+  }
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to main content</a>
+
+  <header role="banner">
+    <div class="container">
+      <a class="brand" href="/" aria-label="legal-ai-agent home">legal-ai-agent<span class="brand-dot" aria-hidden="true">.</span></a>
+      <nav aria-label="Primary">
+        <ul>
+          <li><a href="#how">How it works</a></li>
+          <li><a href="#usecases">Use cases</a></li>
+          <li><a href="#api">API</a></li>
+          <li><a href="#pricing">Pricing</a></li>
+          <li><a href="https://github.com/dnzengou/legal-ai-agent" rel="noopener">GitHub</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero" aria-labelledby="hero-h">
+      <div class="container">
+        <h1 id="hero-h">First-pass contract review in minutes, not hours.</h1>
+        <p class="lede">Send a contract — text or PDF — and get clauses, risk flags, and an executive summary back, with every excerpt cited back to the source.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="#pricing">Start free</a>
+          <a class="btn btn-secondary" href="https://github.com/dnzengou/legal-ai-agent" rel="noopener">View on GitHub</a>
+        </div>
+        <p class="hero-meta">Open source · <strong>MIT license</strong> · Self-host with Docker or use the managed API.</p>
+      </div>
+    </section>
+
+    <section id="how" aria-labelledby="how-h">
+      <div class="container">
+        <h2 id="how-h">How it works</h2>
+        <ol class="steps" role="list">
+          <li class="card">
+            <h3>POST your contract</h3>
+            <p>Send raw text to <code>/review</code> or a base64 PDF to <code>/review-pdf</code>. Up to 500k chars or 32MB.</p>
+          </li>
+          <li class="card">
+            <h3>Claude reviews it</h3>
+            <p>A senior-attorney prompt + adaptive thinking + structured outputs. No hallucinated clauses — excerpts are verbatim.</p>
+          </li>
+          <li class="card">
+            <h3>You get cited JSON</h3>
+            <p>Clauses, risks ranked by severity, recommendations, and character offsets anchoring each excerpt to your source.</p>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <section id="usecases" aria-labelledby="usecases-h">
+      <div class="container">
+        <h2 id="usecases-h">Built for</h2>
+        <div class="grid">
+          <article class="card">
+            <h3>Legal ops teams</h3>
+            <p>Triage incoming vendor contracts before they reach counsel. Cut review queues by 60–80%.</p>
+          </article>
+          <article class="card">
+            <h3>In-house counsel</h3>
+            <p>First-pass summaries on NDAs, MSAs, and DPAs so you can focus on the negotiation, not the read.</p>
+          </article>
+          <article class="card">
+            <h3>SMBs without a GC</h3>
+            <p>Understand what you're signing. Get plain-English summaries and risk flags in under a minute.</p>
+          </article>
+          <article class="card">
+            <h3>Compliance + procurement</h3>
+            <p>Auto-flag auto-renewal, IP assignment, and unbounded liability before they enter your stack.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="api" aria-labelledby="api-h">
+      <div class="container">
+        <h2 id="api-h">One endpoint, structured output</h2>
+        <pre class="code" aria-label="Example API request and response"><code><span class="tok-comment"># Send a contract</span>
+curl -X POST https://api.legal-ai-agent.fly.dev/review \
+  -H <span class="tok-string">"X-API-Key: $YOUR_KEY"</span> \
+  -H <span class="tok-string">"Content-Type: application/json"</span> \
+  -d '{<span class="tok-key">"contract_text"</span>: <span class="tok-string">"This Agreement is entered into..."</span>}'
+
+<span class="tok-comment"># Response</span>
+{
+  <span class="tok-key">"summary"</span>: <span class="tok-string">"Two-year SaaS subscription with auto-renewal..."</span>,
+  <span class="tok-key">"parties"</span>: [<span class="tok-string">"Acme Corp"</span>, <span class="tok-string">"Buyer LLC"</span>],
+  <span class="tok-key">"key_clauses"</span>: [{
+    <span class="tok-key">"type"</span>: <span class="tok-string">"auto_renewal"</span>,
+    <span class="tok-key">"text_excerpt"</span>: <span class="tok-string">"This Agreement shall automatically renew..."</span>,
+    <span class="tok-key">"char_start"</span>: 1842,
+    <span class="tok-key">"char_end"</span>: 1907
+  }],
+  <span class="tok-key">"risks"</span>: [{ <span class="tok-key">"severity"</span>: <span class="tok-string">"high"</span>, <span class="tok-key">"category"</span>: <span class="tok-string">"auto_renewal"</span>, ... }]
+}</code></pre>
+      </div>
+    </section>
+
+    <section id="pricing" aria-labelledby="pricing-h">
+      <div class="container">
+        <h2 id="pricing-h">Pricing</h2>
+        <div class="pricing">
+          <article class="tier" aria-labelledby="tier-oss">
+            <p class="tier-label">Self-host</p>
+            <h3 id="tier-oss">Open Source</h3>
+            <p class="price">€0<small> / forever</small></p>
+            <ul role="list">
+              <li>All features, no limits</li>
+              <li>Docker image (ARM64 + AMD64)</li>
+              <li>One-click Fly.io deploy</li>
+              <li>MIT license</li>
+              <li class="muted">No support SLA</li>
+            </ul>
+            <a class="btn btn-secondary" href="https://github.com/dnzengou/legal-ai-agent#quickstart" rel="noopener">Read the docs</a>
+          </article>
+
+          <article class="tier featured" aria-labelledby="tier-pro">
+            <p class="tier-label">Managed</p>
+            <h3 id="tier-pro">Pro</h3>
+            <p class="price">€9.99<small> / month</small></p>
+            <ul role="list">
+              <li>1,000 reviews / month</li>
+              <li>Hosted API, no infra</li>
+              <li>API key + per-IP rate limits</li>
+              <li>Citations + PDF support</li>
+              <li>Email support, 48h</li>
+            </ul>
+            <a class="btn btn-primary" href="#contact">Join waitlist</a>
+          </article>
+
+          <article class="tier" aria-labelledby="tier-ent">
+            <p class="tier-label">Custom</p>
+            <h3 id="tier-ent">Enterprise</h3>
+            <p class="price">Talk to us</p>
+            <ul role="list">
+              <li>Unlimited reviews</li>
+              <li>SLA + audit logs</li>
+              <li>On-prem or VPC deploy</li>
+              <li>Custom retention</li>
+              <li>Dedicated support</li>
+            </ul>
+            <a class="btn btn-secondary" href="#contact">Contact sales</a>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="security-h">
+      <div class="container">
+        <h2 id="security-h">Security &amp; data handling</h2>
+        <div class="grid">
+          <article class="card">
+            <h3>No persistence by default</h3>
+            <p>Contracts are processed in memory and discarded after the response. Bring your own storage.</p>
+          </article>
+          <article class="card">
+            <h3>API key + rate limits</h3>
+            <p>Per-IP token bucket + header-based auth out of the box. Configurable via env, no code changes.</p>
+          </article>
+          <article class="card">
+            <h3>Open code, audit yourself</h3>
+            <p>Every prompt, every parser, every dependency is in the repo. Read it before you trust it.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="faq-h">
+      <div class="container">
+        <h2 id="faq-h">FAQ</h2>
+        <details class="faq">
+          <summary>Is this legal advice?</summary>
+          <p>No. This is a software tool that produces a structured first-pass review. Final judgment belongs to a qualified attorney. Output may be wrong; verify before acting.</p>
+        </details>
+        <details class="faq">
+          <summary>What model powers it?</summary>
+          <p>Anthropic's Claude Opus 4.8 with adaptive thinking and high reasoning effort, called through structured outputs so responses validate against a strict schema.</p>
+        </details>
+        <details class="faq">
+          <summary>Do you train on my contracts?</summary>
+          <p>No. We don't store contracts, and Anthropic's API doesn't train on inputs by default. If you're on the managed tier, your data stays your data.</p>
+        </details>
+        <details class="faq">
+          <summary>What jurisdictions does it understand?</summary>
+          <p>You can pass a <code>jurisdiction</code> hint (e.g. <code>"US-DE"</code> or <code>"EU"</code>) to tailor risk analysis. The underlying model has broad coverage of US and EU commercial law; specialized regions are best treated as advisory.</p>
+        </details>
+        <details class="faq">
+          <summary>What about accessibility?</summary>
+          <p>This site targets WCAG 2.2 AA: semantic HTML, 4.5:1 minimum contrast, keyboard-only navigation, <code>prefers-reduced-motion</code> support, forced-colors mode, and visible focus rings. <a href="https://github.com/dnzengou/legal-ai-agent/issues/new">Report any gaps</a> — they're treated as bugs.</p>
+        </details>
+      </div>
+    </section>
+
+    <section id="contact" aria-labelledby="contact-h">
+      <div class="container">
+        <h2 id="contact-h">Get in touch</h2>
+        <p>For Pro waitlist or Enterprise inquiries, email <a href="mailto:hello@legal-ai-agent.dev">hello@legal-ai-agent.dev</a> or open an issue on GitHub. We reply within two business days.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer role="contentinfo">
+    <div class="container">
+      <p>© 2026 legal-ai-agent · <a href="https://github.com/dnzengou/legal-ai-agent/blob/main/LICENSE" rel="noopener">MIT License</a></p>
+      <p><a href="https://github.com/dnzengou/legal-ai-agent" rel="noopener">GitHub</a> · <a href="https://github.com/dnzengou/legal-ai-agent/blob/main/BLUEPRINT.md" rel="noopener">Roadmap</a> · <a href="https://github.com/dnzengou/legal-ai-agent/blob/main/GTM.md" rel="noopener">Why we built this</a></p>
+    </div>
+  </footer>
+</body>
+</html>

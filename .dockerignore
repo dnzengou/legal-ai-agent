@@ -13,3 +13,8 @@ venv
 tests
 .github
 fly.toml
+node_modules
+dist
+.git
+*.swp
+*.log

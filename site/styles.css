@@ -342,9 +342,139 @@ footer a:hover, footer a:focus-visible { color: var(--fg); }
   border: 0;
 }
 
+/* Section lede */
+.section-lede {
+  color: var(--fg-muted);
+  max-width: 46rem;
+  margin: -0.5rem 0 1.75rem;
+  font-size: 1.05rem;
+}
+
+/* Interactive demo */
+.demo {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+}
+.demo-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.75rem;
+}
+.demo-label { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 0.35rem; }
+.demo-select {
+  flex: 1 1 22rem;
+  min-height: 44px;
+  padding: 0.5rem 0.75rem;
+  font-family: inherit;
+  font-size: 1rem;
+  color: var(--fg);
+  background: var(--bg-elev-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.demo-result {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+.demo-result:focus-visible { outline: var(--focus-ring); outline-offset: 4px; }
+
+.demo-scorecard {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.score-ring { position: relative; flex: 0 0 auto; width: 120px; height: 120px; }
+.ring-track { stroke: var(--border); }
+.ring-arc { transition: stroke-dashoffset 700ms ease, stroke 200ms; }
+@media (prefers-reduced-motion: reduce) { .ring-arc { transition: none; } }
+.score-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.score-num { font-size: 2rem; font-weight: 700; font-family: var(--mono); line-height: 1; }
+.score-grade { font-size: 0.85rem; font-weight: 600; margin-top: 0.2rem; }
+.demo-headline { flex: 1 1 16rem; }
+.demo-verdict { font-size: 1.2rem; font-weight: 700; margin: 0 0 0.35rem; }
+.demo-summary { color: var(--fg-muted); margin: 0; }
+
+.demo-cols {
+  display: grid;
+  gap: var(--gap);
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  margin-top: 1.5rem;
+}
+.demo-h3 { font-size: 1rem; margin: 0 0 0.6rem; }
+
+.badge-list, .chip-list, .rec-list { list-style: none; padding: 0; margin: 0; }
+.badge {
+  display: block;
+  padding: 0.6rem 0.75rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  border-left-width: 4px;
+  background: var(--bg-elev-2);
+  margin-bottom: 0.5rem;
+}
+.badge-high { border-left-color: var(--danger); }
+.badge-medium { border-left-color: var(--warning); }
+.badge-low { border-left-color: var(--success); }
+.badge-sev {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  background: var(--bg);
+}
+.badge-high .badge-sev { color: var(--danger); }
+.badge-medium .badge-sev { color: var(--warning); }
+.badge-low .badge-sev { color: var(--success); }
+.badge-cat { font-weight: 600; margin-left: 0.35rem; }
+.badge-desc { display: block; color: var(--fg-muted); font-size: 0.92rem; margin-top: 0.25rem; }
+
+.chip {
+  display: inline-block;
+  padding: 0.35rem 0.7rem;
+  margin: 0 0.4rem 0.4rem 0;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-elev-2);
+  font-size: 0.9rem;
+}
+.chip-gap { border-color: var(--danger); }
+.chip-compliant { border-color: var(--success); }
+.chip-unclear { border-color: var(--warning); }
+
+.rec-list li {
+  position: relative;
+  padding: 0.3rem 0 0.3rem 1.4rem;
+  color: var(--fg-muted);
+}
+.rec-list li::before { content: "→"; position: absolute; left: 0; color: var(--accent); font-weight: 700; }
+
+.demo-disclaimer {
+  margin: 1.5rem 0 0;
+  font-size: 0.85rem;
+  color: var(--fg-muted);
+  font-style: italic;
+}
+
 /* Forced-colors / Windows High Contrast support */
 @media (forced-colors: active) {
   .btn-primary { border: 2px solid ButtonText; }
   .tier.featured { border: 2px solid Highlight; box-shadow: none; }
   :focus-visible { outline: 3px solid Highlight; }
+  .badge, .chip { border: 1px solid ButtonText; }
+  .ring-arc { stroke: Highlight !important; }
 }

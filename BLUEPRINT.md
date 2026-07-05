@@ -1,8 +1,8 @@
 # legal-ai-agent — Blueprint
 
-**Version:** 0.6.0
+**Version:** 0.6.1
 **Date:** 2026-06-28
-**Status:** v0 scaffold + auth + rate limit + citations + CORS + landing page + GTM + safety scoring + compliance flags + prod hardening
+**Status:** v0 scaffold + auth + rate limit + citations + CORS + landing page + GTM + safety scoring + compliance flags + prod hardening + interactive demo + Python client
 
 ## Mission
 
@@ -55,9 +55,10 @@ client → FastAPI (api/app.py)
 | Python source (clone + pip) | ✅ | `requirements.txt`, `uvicorn api.app:app` |
 | Docker image (GHCR, ARM64) | ✅ | CI on push to `main` |
 | Fly.io managed deploy | ✅ | `fly.toml`, `fly deploy` |
-| Landing page | ✅ | `site/index.html` (deploy via any static host) |
+| Landing page + live demo | ✅ | `site/index.html` (interactive sample review, WCAG AA) |
+| Python client (copy-paste) | ✅ | `examples/client.py` — stdlib-only, no deps |
 | GitHub releases | 🔲 | tag-on-merge workflow planned |
-| Python SDK (`pip install legal-ai-agent`) | 🔲 | thin client wrapper |
+| Python SDK (`pip install legal-ai-agent`) | 🔲 | packaged wrapper (client exists as `examples/client.py`) |
 | Hosted managed tier (Pro €9.99/mo) | 🔲 | waitlist live, billing pending |
 
 ## API contract
@@ -133,6 +134,7 @@ Same response shape; request body:
 | 0.4.0   | 2026-06-19 | Citations: `char_start`/`char_end` on each `KeyClause`, server-filled via exact substring match against source text |
 | 0.5.0   | 2026-06-19 | Landing page (`site/`, WCAG 2.2 AA), GTM playbook, CORS via `CORS_ORIGINS`, README rewrite, Distribution Channels table |
 | 0.6.0   | 2026-06-28 | Safety score (0–100) + letter grade (A–F) computed server-side from risks; per-framework compliance flags; production hardening (request-id tracing, access logs, security headers, GZip, sanitized 500, root `/`); fixed corrupted Dockerfile (was building the Node frontend, not the FastAPI service) |
+| 0.6.1   | 2026-06-28 | Commercial low-hanging fruit: interactive **live demo** on the landing page (client-side sample review — score ring, A–F grade, risk badges, compliance chips; verified light/dark, WCAG AA); refreshed landing value props + API example to show `safety_score`/`letter_grade`/`compliance_flags`; **dependency-free Python client** (`examples/client.py`) + 7 tests; `X-Request-ID` now echoed on sanitized 500s |
 # Nexus Legal — Blueprint v4.0
 
 > "ChatGPT for Legal Work" — lean, chat-first, accessible, installable AI legal platform.

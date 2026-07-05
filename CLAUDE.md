@@ -23,7 +23,9 @@ src/agent.py        LegalAgent class — single review() entrypoint
 src/prompts.py      System prompt + JSON schema
 src/schema.py       Pydantic models for request/response
 src/scoring.py      Deterministic safety score (0-100) + letter grade (A-F)
-tests/              Smoke + scoring + app + auth + rate-limit + anchoring tests (no network — mocked client)
+examples/client.py  Dependency-free (stdlib) Python client — copy-paste, no pip install
+site/index.html     Landing page + interactive client-side demo (sample review)
+tests/              Smoke + scoring + app + auth + rate-limit + anchoring + client tests (no network — mocked)
 Dockerfile          ARM64 multi-arch image (Python 3.12 / uvicorn)
 fly.toml            Fly.io machine config (512mb, shared cpu)
 ```

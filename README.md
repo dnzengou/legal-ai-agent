@@ -16,7 +16,7 @@ cp .env.example .env
 # set API_KEYS to a comma-separated allowlist for production
 
 pip install -r requirements-dev.txt
-pytest -q                      # 44 tests, no network
+pytest -q                      # 51 tests, no network
 uvicorn api.app:app --reload --port 8000
 ```
 
@@ -47,6 +47,22 @@ curl -X POST http://localhost:8000/review-pdf \
   -H "Content-Type: application/json" \
   -d "{\"pdf_base64\": \"$(base64 -w0 contract.pdf)\"}"
 ```
+
+### Python client (no dependencies)
+
+A stdlib-only client ships in [`examples/client.py`](./examples/client.py) — copy it into any project:
+
+```python
+from client import LegalAIClient
+
+client = LegalAIClient("http://localhost:8000", api_key="client-key-1")
+review = client.review("This Agreement is entered into...", jurisdiction="US-DE")
+print(review["safety_score"], review["letter_grade"])   # e.g. 72 C
+for risk in review["risks"]:
+    print(risk["severity"], risk["category"])
+```
+
+Try it live — no signup — on the [landing page demo](./site/index.html#demo).
 
 ## Endpoints
 

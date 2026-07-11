@@ -1,5 +1,6 @@
 {
   "version": 2,
+  "installCommand": "npm install --no-audit --no-fund",
   "buildCommand": "echo 'static landing page — no build step'",
   "outputDirectory": "site",
   "cleanUrls": true,

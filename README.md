@@ -62,7 +62,13 @@ for risk in review["risks"]:
     print(risk["severity"], risk["category"])
 ```
 
-Try it live — no signup — on the [landing page demo](./site/index.html#demo).
+Try it live — no signup — on the [landing page demo](./site/index.html#demo) (includes a "View raw JSON" toggle showing the exact response).
+
+**Example app — portfolio batch review:** [`examples/batch_review.py`](./examples/batch_review.py) reviews a folder of contracts and rolls the per-contract safety scores into a portfolio view (average grade, critical contracts, common compliance gaps):
+
+```bash
+python examples/batch_review.py http://localhost:8000 --key client-key-1 --dir ./contracts_txt
+```
 
 ## Endpoints
 

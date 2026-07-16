@@ -115,6 +115,11 @@
               <ul id="demo-recs" class="rec-list" role="list"></ul>
             </div>
 
+            <details class="demo-json">
+              <summary>View raw JSON response</summary>
+              <pre class="code"><code id="demo-json-body"></code></pre>
+            </details>
+
             <p class="demo-disclaimer">Sample output for illustration — not legal advice. The live API computes the safety score server-side from the model's risks.</p>
           </div>
         </div>
@@ -309,6 +314,7 @@ curl -X POST https://api.legal-ai-agent.fly.dev/review \
     (function () {
       var SAMPLES = {
         saas: {
+          parties: ["Acme SaaS Inc.", "Buyer Corp."],
           summary: "Two-year SaaS subscription that auto-renews without notice and caps nothing on the vendor's liability. Personal data is processed with no DPA.",
           risks: [
             { severity: "high", category: "uncapped_liability", description: "No limitation-of-liability clause — exposure is unbounded." },
@@ -327,6 +333,7 @@ curl -X POST https://api.legal-ai-agent.fly.dev/review \
           ]
         },
         nda: {
+          parties: ["Discloser Ltd.", "Recipient LLC"],
           summary: "Mutual NDA with a perpetual confidentiality obligation and no carve-outs for independently developed information.",
           risks: [
             { severity: "medium", category: "perpetual_obligation", description: "Confidentiality never expires — prefer a 3–5 year term." },
@@ -405,6 +412,18 @@ curl -X POST https://api.legal-ai-agent.fly.dev/review \
 
         var recs = $("demo-recs"); recs.innerHTML = "";
         data.recommendations.forEach(function (rec) { recs.appendChild(li("", esc(rec))); });
+
+        // Raw JSON — the exact shape POST /review returns (score/grade are server-computed).
+        var response = {
+          summary: data.summary,
+          parties: data.parties,
+          risks: data.risks,
+          compliance_flags: data.compliance,
+          recommendations: data.recommendations,
+          safety_score: s,
+          letter_grade: g
+        };
+        $("demo-json-body").textContent = JSON.stringify(response, null, 2);
 
         result.hidden = false;
       }

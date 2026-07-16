@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { createRouter, authedQuery } from "../middleware";
+import { createRouter, authedQuery } from "../middleware.js";
 
 // ── Intent detection ──────────────────────────────────────────────
 type Intent =

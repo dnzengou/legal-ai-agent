@@ -1,5 +1,5 @@
-import { getDb } from "../api/queries/connection";
-import { precedents, statutes, judgments } from "./schema";
+import { getDb } from "../api/queries/connection.js";
+import { precedents, statutes, judgments } from "./schema.js";
 
 async function seed() {
   const db = getDb();

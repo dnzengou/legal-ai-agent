@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { eq, desc, like, and, sql } from "drizzle-orm";
-import { createRouter, publicQuery } from "../middleware";
-import { getDb } from "../queries/connection";
-import { statutes } from "@db/schema";
+import { createRouter, publicQuery } from "../middleware.js";
+import { getDb } from "../queries/connection.js";
+import { statutes } from "../../db/schema.js";
 
 export const statuteRouter = createRouter({
   search: publicQuery

@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { sql } from "drizzle-orm";
-import { createRouter, publicQuery } from "../middleware";
-import { getDb } from "../queries/connection";
-import { documents, analyses, precedents, statutes, judgments, activityLog } from "@db/schema";
+import { createRouter, publicQuery } from "../middleware.js";
+import { getDb } from "../queries/connection.js";
+import { documents, analyses, precedents, statutes, judgments, activityLog } from "../../db/schema.js";
 
 export const analyticsRouter = createRouter({
   dashboard: publicQuery

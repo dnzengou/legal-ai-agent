@@ -1,9 +1,9 @@
 import { z } from "zod";
 import { eq, desc, and, sql } from "drizzle-orm";
-import { createRouter, publicQuery } from "../middleware";
-import { getDb } from "../queries/connection";
-import { analyses, documents } from "@db/schema";
-import type { Document } from "@db/schema";
+import { createRouter, publicQuery } from "../middleware.js";
+import { getDb } from "../queries/connection.js";
+import { analyses, documents } from "../../db/schema.js";
+import type { Document } from "../../db/schema.js";
 
 // ── Simulated AI analysis engine ──────────────────────────────────
 const ANALYSIS_TEMPLATES: Record<string, (_doc: Document) => object> = {

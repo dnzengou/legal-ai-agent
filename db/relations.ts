@@ -5,7 +5,7 @@ import {
   analyses,
   ethicalReviews,
   activityLog,
-} from "./schema";
+} from "./schema.js";
 
 export const usersRelations = relations(users, ({ many }) => ({
   documents: many(documents),

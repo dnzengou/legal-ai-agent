@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { eq, desc, like, and, sql } from "drizzle-orm";
-import { createRouter, publicQuery } from "../middleware";
-import { getDb } from "../queries/connection";
-import { precedents } from "@db/schema";
+import { createRouter, publicQuery } from "../middleware.js";
+import { getDb } from "../queries/connection.js";
+import { precedents } from "../../db/schema.js";
 
 export const precedentRouter = createRouter({
   search: publicQuery

@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { createRouter, authedQuery } from "../middleware";
-import { getDb } from "../queries/connection";
-import { documents } from "@db/schema";
+import { createRouter, authedQuery } from "../middleware.js";
+import { getDb } from "../queries/connection.js";
+import { documents } from "../../db/schema.js";
 import { inArray } from "drizzle-orm";
 
 // ── Rapid contract assessment — mirrors contract-review but lighter ─

@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { eq, desc } from "drizzle-orm";
-import { createRouter, publicQuery } from "../middleware";
-import { getDb } from "../queries/connection";
-import { aiEngines } from "@db/schema";
+import { createRouter, publicQuery } from "../middleware.js";
+import { getDb } from "../queries/connection.js";
+import { aiEngines } from "../../db/schema.js";
 
 export const aiEngineRouter = createRouter({
   list: publicQuery.query(async () => {

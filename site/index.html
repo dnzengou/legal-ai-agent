@@ -41,6 +41,7 @@
       <a class="brand" href="/" aria-label="legal-ai-agent home">legal-ai-agent<span class="brand-dot" aria-hidden="true">.</span></a>
       <nav aria-label="Primary">
         <ul>
+          <li><a href="#demo">Demo</a></li>
           <li><a href="#how">How it works</a></li>
           <li><a href="#usecases">Use cases</a></li>
           <li><a href="#api">API</a></li>
@@ -55,12 +56,73 @@
     <section class="hero" aria-labelledby="hero-h">
       <div class="container">
         <h1 id="hero-h">First-pass contract review in minutes, not hours.</h1>
-        <p class="lede">Send a contract — text or PDF — and get clauses, risk flags, and an executive summary back, with every excerpt cited back to the source.</p>
+        <p class="lede">Send a contract — text or PDF — and get clauses, risk flags, a <strong>0–100 safety score</strong> with an <strong>A–F grade</strong>, compliance flags, and an executive summary back, with every excerpt cited to the source.</p>
         <div class="hero-actions">
-          <a class="btn btn-primary" href="#pricing">Start free</a>
+          <a class="btn btn-primary" href="#demo">Try a sample review</a>
           <a class="btn btn-secondary" href="https://github.com/dnzengou/legal-ai-agent" rel="noopener">View on GitHub</a>
         </div>
         <p class="hero-meta">Open source · <strong>MIT license</strong> · Self-host with Docker or use the managed API.</p>
+      </div>
+    </section>
+
+    <section id="demo" aria-labelledby="demo-h">
+      <div class="container">
+        <h2 id="demo-h">See a review, live</h2>
+        <p class="section-lede">Pick a sample contract and run it. This is the exact JSON shape the API returns — safety score, letter grade, risks, and compliance flags. No signup, runs in your browser.</p>
+
+        <div class="demo">
+          <div class="demo-controls">
+            <label class="demo-label" for="demo-sample">Sample contract</label>
+            <select id="demo-sample" class="demo-select">
+              <option value="saas">SaaS subscription (MSA) — auto-renewal + uncapped liability</option>
+              <option value="nda">Mutual NDA — perpetual confidentiality, no data terms</option>
+            </select>
+            <button id="demo-run" class="btn btn-primary" type="button" aria-controls="demo-result">Run sample review</button>
+          </div>
+
+          <div id="demo-result" class="demo-result" role="region" aria-live="polite" aria-label="Sample review result" hidden>
+            <div class="demo-scorecard">
+              <div class="score-ring" role="img" aria-label="Safety score">
+                <svg viewBox="0 0 120 120" width="120" height="120" aria-hidden="true">
+                  <circle class="ring-track" cx="60" cy="60" r="52" fill="none" stroke-width="10"></circle>
+                  <circle id="ring-arc" class="ring-arc" cx="60" cy="60" r="52" fill="none" stroke-width="10"
+                          stroke-linecap="round" transform="rotate(-90 60 60)"></circle>
+                </svg>
+                <div class="score-center">
+                  <span id="demo-score" class="score-num">—</span>
+                  <span id="demo-grade" class="score-grade">—</span>
+                </div>
+              </div>
+              <div class="demo-headline">
+                <p id="demo-verdict" class="demo-verdict">—</p>
+                <p id="demo-summary" class="demo-summary"></p>
+              </div>
+            </div>
+
+            <div class="demo-cols">
+              <div>
+                <h3 class="demo-h3">Risks</h3>
+                <ul id="demo-risks" class="badge-list" role="list"></ul>
+              </div>
+              <div>
+                <h3 class="demo-h3">Compliance</h3>
+                <ul id="demo-compliance" class="chip-list" role="list"></ul>
+              </div>
+            </div>
+
+            <div>
+              <h3 class="demo-h3">Recommendations</h3>
+              <ul id="demo-recs" class="rec-list" role="list"></ul>
+            </div>
+
+            <details class="demo-json">
+              <summary>View raw JSON response</summary>
+              <pre class="code"><code id="demo-json-body"></code></pre>
+            </details>
+
+            <p class="demo-disclaimer">Sample output for illustration — not legal advice. The live API computes the safety score server-side from the model's risks.</p>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -117,17 +179,20 @@ curl -X POST https://api.legal-ai-agent.fly.dev/review \
   -H <span class="tok-string">"Content-Type: application/json"</span> \
   -d '{<span class="tok-key">"contract_text"</span>: <span class="tok-string">"This Agreement is entered into..."</span>}'
 
-<span class="tok-comment"># Response</span>
+<span class="tok-comment"># Response — safety score + grade computed server-side, never trusted from the model</span>
 {
   <span class="tok-key">"summary"</span>: <span class="tok-string">"Two-year SaaS subscription with auto-renewal..."</span>,
   <span class="tok-key">"parties"</span>: [<span class="tok-string">"Acme Corp"</span>, <span class="tok-string">"Buyer LLC"</span>],
+  <span class="tok-key">"safety_score"</span>: 72,
+  <span class="tok-key">"letter_grade"</span>: <span class="tok-string">"C"</span>,
   <span class="tok-key">"key_clauses"</span>: [{
     <span class="tok-key">"type"</span>: <span class="tok-string">"auto_renewal"</span>,
     <span class="tok-key">"text_excerpt"</span>: <span class="tok-string">"This Agreement shall automatically renew..."</span>,
     <span class="tok-key">"char_start"</span>: 1842,
     <span class="tok-key">"char_end"</span>: 1907
   }],
-  <span class="tok-key">"risks"</span>: [{ <span class="tok-key">"severity"</span>: <span class="tok-string">"high"</span>, <span class="tok-key">"category"</span>: <span class="tok-string">"auto_renewal"</span>, ... }]
+  <span class="tok-key">"risks"</span>: [{ <span class="tok-key">"severity"</span>: <span class="tok-string">"high"</span>, <span class="tok-key">"category"</span>: <span class="tok-string">"auto_renewal"</span>, ... }],
+  <span class="tok-key">"compliance_flags"</span>: [{ <span class="tok-key">"framework"</span>: <span class="tok-string">"GDPR"</span>, <span class="tok-key">"status"</span>: <span class="tok-string">"gap"</span>, ... }]
 }</code></pre>
       </div>
     </section>
@@ -241,5 +306,137 @@ curl -X POST https://api.legal-ai-agent.fly.dev/review \
       <p><a href="https://github.com/dnzengou/legal-ai-agent" rel="noopener">GitHub</a> · <a href="https://github.com/dnzengou/legal-ai-agent/blob/main/BLUEPRINT.md" rel="noopener">Roadmap</a> · <a href="https://github.com/dnzengou/legal-ai-agent/blob/main/GTM.md" rel="noopener">Why we built this</a></p>
     </div>
   </footer>
+
+  <script>
+    // Interactive sample review — canned data, runs fully client-side (no network, no signup).
+    // The score/grade here mirror the server's deterministic scoring: start at 100,
+    // deduct 20 per high risk, 8 per medium, 3 per low; A>=90 B>=80 C>=70 D>=60 else F.
+    (function () {
+      var SAMPLES = {
+        saas: {
+          parties: ["Acme SaaS Inc.", "Buyer Corp."],
+          summary: "Two-year SaaS subscription that auto-renews without notice and caps nothing on the vendor's liability. Personal data is processed with no DPA.",
+          risks: [
+            { severity: "high", category: "uncapped_liability", description: "No limitation-of-liability clause — exposure is unbounded." },
+            { severity: "high", category: "auto_renewal", description: "Renews for successive 12-month terms with no opt-out window." },
+            { severity: "medium", category: "ip_assignment", description: "Work product IP assigns to the vendor, not the customer." },
+            { severity: "low", category: "governing_law", description: "Foreign choice of law without an arbitration fallback." }
+          ],
+          compliance: [
+            { framework: "GDPR", status: "gap", note: "No Article 28 data-processing agreement." },
+            { framework: "SOC2", status: "unclear", note: "Security controls not referenced." }
+          ],
+          recommendations: [
+            "Add a mutual liability cap (e.g. 12 months of fees).",
+            "Insert a 60-day auto-renewal opt-out notice window.",
+            "Attach a GDPR-compliant DPA before processing any EU data."
+          ]
+        },
+        nda: {
+          parties: ["Discloser Ltd.", "Recipient LLC"],
+          summary: "Mutual NDA with a perpetual confidentiality obligation and no carve-outs for independently developed information.",
+          risks: [
+            { severity: "medium", category: "perpetual_obligation", description: "Confidentiality never expires — prefer a 3–5 year term." },
+            { severity: "low", category: "definitions", description: "“Confidential Information” is broad and undefined at the edges." }
+          ],
+          compliance: [
+            { framework: "GDPR", status: "not_applicable", note: "No personal data in scope." }
+          ],
+          recommendations: [
+            "Cap the confidentiality term at 3–5 years post-termination.",
+            "Add standard carve-outs (public, independently developed, lawfully received)."
+          ]
+        }
+      };
+
+      var SEV = { high: 20, medium: 8, low: 3 };
+      function score(risks) {
+        var s = 100;
+        for (var i = 0; i < risks.length; i++) s -= (SEV[risks[i].severity] || 0);
+        return Math.max(0, Math.min(100, s));
+      }
+      function grade(s) {
+        return s >= 90 ? "A" : s >= 80 ? "B" : s >= 70 ? "C" : s >= 60 ? "D" : "F";
+      }
+      function gradeColor(g) {
+        if (g === "A" || g === "B") return "var(--success)";
+        if (g === "C") return "var(--warning)";
+        return "var(--danger)";
+      }
+      // Verdict derives from the grade so it always matches the score.
+      var VERDICT = {
+        A: "Low risk — safe to sign",
+        B: "Minor revisions recommended",
+        C: "Negotiate before signing",
+        D: "Significant issues — negotiate hard",
+        F: "High risk — do not sign as-is"
+      };
+
+      var $ = function (id) { return document.getElementById(id); };
+      var result = $("demo-result");
+      var arc = $("ring-arc");
+      var CIRC = 2 * Math.PI * 52; // r=52
+
+      function li(cls, html) { var el = document.createElement("li"); el.className = cls; el.innerHTML = html; return el; }
+      function esc(t) { var d = document.createElement("div"); d.textContent = t; return d.innerHTML; }
+
+      function render(key) {
+        var data = SAMPLES[key];
+        var s = score(data.risks);
+        var g = grade(s);
+        var color = gradeColor(g);
+
+        $("demo-score").textContent = s;
+        var gradeEl = $("demo-grade");
+        gradeEl.textContent = "Grade " + g;
+        gradeEl.style.color = color;
+        arc.style.stroke = color;
+        arc.style.strokeDasharray = CIRC;
+        arc.style.strokeDashoffset = CIRC * (1 - s / 100);
+        $("demo-verdict").textContent = VERDICT[g];
+        $("demo-summary").textContent = data.summary;
+
+        var risks = $("demo-risks"); risks.innerHTML = "";
+        data.risks.forEach(function (r) {
+          risks.appendChild(li("badge badge-" + r.severity,
+            "<span class=\"badge-sev\">" + r.severity + "</span> " +
+            "<span class=\"badge-cat\">" + esc(r.category.replace(/_/g, " ")) + "</span>" +
+            "<span class=\"badge-desc\">" + esc(r.description) + "</span>"));
+        });
+
+        var comp = $("demo-compliance"); comp.innerHTML = "";
+        data.compliance.forEach(function (c) {
+          comp.appendChild(li("chip chip-" + c.status,
+            "<strong>" + esc(c.framework) + "</strong> · " + esc(c.status.replace(/_/g, " "))));
+        });
+
+        var recs = $("demo-recs"); recs.innerHTML = "";
+        data.recommendations.forEach(function (rec) { recs.appendChild(li("", esc(rec))); });
+
+        // Raw JSON — the exact shape POST /review returns (score/grade are server-computed).
+        var response = {
+          summary: data.summary,
+          parties: data.parties,
+          risks: data.risks,
+          compliance_flags: data.compliance,
+          recommendations: data.recommendations,
+          safety_score: s,
+          letter_grade: g
+        };
+        $("demo-json-body").textContent = JSON.stringify(response, null, 2);
+
+        result.hidden = false;
+      }
+
+      $("demo-run").addEventListener("click", function () {
+        render($("demo-sample").value);
+        result.setAttribute("tabindex", "-1");
+        result.focus({ preventScroll: false });
+      });
+      $("demo-sample").addEventListener("change", function () {
+        if (!result.hidden) render(this.value);
+      });
+    })();
+  </script>
 </body>
 </html>

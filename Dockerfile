@@ -23,23 +23,3 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()" || exit 1
 
 CMD ["uvicorn", "api.app:app", "--host", "0.0.0.0", "--port", "8000"]
-FROM node:20-alpine AS base
-WORKDIR /app
-
-FROM base AS deps
-COPY package.json package-lock.json ./
-RUN npm config set registry https://npm.mirrors.msh.team
-RUN --mount=type=cache,target=/root/.npm \
-    npm ci --prefer-offline --no-audit
-
-FROM deps AS build
-COPY . .
-RUN npm run build
-
-FROM node:20-alpine AS production
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=build /app/dist ./dist
-COPY package.json .env ./
-
-EXPOSE 3000
-CMD ["npm", "start"]

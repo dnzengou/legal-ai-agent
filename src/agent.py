@@ -3,6 +3,7 @@ import logging
 from anthropic import Anthropic
 from .schema import ContractReview
 from .prompts import SYSTEM_PROMPT, build_user_prompt
+from .scoring import compute_safety_score, letter_grade
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +31,18 @@ def _anchor_clauses(review: ContractReview, source: str) -> ContractReview:
     return review
 
 
+def _apply_score(review: ContractReview) -> ContractReview:
+    """Set safety_score (0-100) and letter_grade (A-F) from the review's risks.
+
+    Server-owned, deterministic: the model surfaces the risks, the server computes the
+    number. See src/scoring.py for the rationale."""
+    review.safety_score = compute_safety_score(review.risks)
+    review.letter_grade = letter_grade(review.safety_score)
+    logger.info("Safety score %d (%s) from %d risk(s)",
+                review.safety_score, review.letter_grade, len(review.risks))
+    return review
+
+
 class LegalAgent:
     def __init__(self, client: Anthropic | None = None):
         self.client = client or Anthropic()
@@ -52,7 +65,7 @@ class LegalAgent:
             ],
             output_format=ContractReview,
         )
-        return _anchor_clauses(response.parsed_output, contract_text)
+        return _apply_score(_anchor_clauses(response.parsed_output, contract_text))
 
     def review_pdf(
         self,
@@ -101,4 +114,4 @@ class LegalAgent:
             ],
             output_format=ContractReview,
         )
-        return response.parsed_output
+        return _apply_score(response.parsed_output)

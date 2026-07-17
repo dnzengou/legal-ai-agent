@@ -1,8 +1,8 @@
 # legal-ai-agent — Blueprint
 
-**Version:** 0.7.0
-**Date:** 2026-07-16
-**Status:** lean single-product API — auth · rate limit · citations · safety scoring · compliance flags · prod hardening · landing demo · Python client
+**Version:** 0.7.1
+**Date:** 2026-07-17
+**Status:** lean single-product API — auth · rate limit · citations · safety scoring · compliance flags · prod hardening · **search-first landing** · Python client
 
 ## Mission
 
@@ -136,3 +136,4 @@ Same response shape; request body:
 | 0.6.0   | 2026-06-28 | Safety score (0–100) + letter grade (A–F) computed server-side from risks; per-framework compliance flags; production hardening (request-id tracing, access logs, security headers, GZip, sanitized 500, root `/`); fixed corrupted Dockerfile (was building the Node frontend, not the FastAPI service) |
 | 0.6.1   | 2026-06-28 | Commercial low-hanging fruit: interactive **live demo** on the landing page (client-side sample review — score ring, A–F grade, risk badges, compliance chips; verified light/dark, WCAG AA); refreshed landing value props + API example to show `safety_score`/`letter_grade`/`compliance_flags`; **dependency-free Python client** (`examples/client.py`) + 7 tests; `X-Request-ID` now echoed on sanitized 500s |
 | 0.7.0   | 2026-07-16 | **Less is more:** retired the unbuilt React/Hono frontend (142 files, ~100 npm deps, Vite/tRPC/Drizzle toolchain) that never deployed. Repo is now one coherent product — the FastAPI contract-review API + static landing page. No cross-imports removed anything from the Python app (55 tests still green). Trimmed `.env.example` to API vars, streamlined `BLUEPRINT.md` to a single blueprint, and pointed Vercel at the static `site/` (zero build). |
+| 0.7.1   | 2026-07-17 | **Search-first UX:** landing page rebuilt as a Google-search-like fold — big centered wordmark, prompt input, 3 sample chips, minimal chrome. Cut 9 sections down to 1 stage + 1 result + collapsed "learn more". Added the **Svensk medborgarskap överklagan** sample (Migrationsverket appeal with adaptive verdict, MedbL 11§/12§ + FL 44§ citations, MIG 2019:20 case law). Added **role reveal chips** — Creators / Entrepreneurs / Builders / Consultants / Owners / Operators — each with the top 5 legal matters for that profile. Verified light + dark, 55 tests green. |

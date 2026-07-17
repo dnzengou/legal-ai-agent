@@ -1,7 +1,6 @@
 {
-  "git": { "deploymentEnabled": false },
-  "buildCommand": "echo 'static site — no build'",
-  "outputDirectory": "site",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
   "cleanUrls": true,
   "headers": [
     {

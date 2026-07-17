@@ -53,9 +53,10 @@
             <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/>
             <path d="M16 16l5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
           </svg>
-          <input id="prompt-input" name="q" type="text" autocomplete="off" spellcheck="false"
+          <input id="prompt-input" name="q" type="text" autocomplete="off" spellcheck="false" autofocus
                  placeholder="Paste a contract, appeal, or ask a legal question…"
                  aria-describedby="prompt-hint">
+          <kbd class="prompt-kbd" aria-hidden="true">/</kbd>
         </div>
         <div class="prompt-actions">
           <button type="submit" class="btn btn-primary">Analyze</button>
@@ -84,6 +85,10 @@
     </section>
 
     <section id="result" class="result" role="region" aria-live="polite" aria-label="Analysis result" hidden>
+      <p class="illustrative-badge">
+        <span class="illustrative-dot" aria-hidden="true"></span>
+        Illustrative sample — this preview runs client-side. <a href="https://github.com/dnzengou/legal-ai-agent#call-it" rel="noopener">Call the live API</a> to analyze your own document.
+      </p>
       <header class="result-head">
         <div class="score-ring" role="img" aria-label="Safety score">
           <svg viewBox="0 0 120 120" width="96" height="96" aria-hidden="true">
@@ -411,6 +416,30 @@ curl -X POST https://api.legal-ai-agent.fly.dev/review \
           detail.innerHTML = html;
           detail.hidden = false;
         });
+      });
+
+      // Global keyboard shortcuts — Google-style / to focus, Escape to reset stage.
+      document.addEventListener("keydown", function (e) {
+        var target = e.target;
+        var typing = target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable);
+        if (e.key === "/" && !typing && !e.metaKey && !e.ctrlKey && !e.altKey) {
+          e.preventDefault();
+          var input = $("prompt-input");
+          input.focus();
+          input.select();
+        } else if (e.key === "Escape") {
+          if (!result.hidden) {
+            result.hidden = true;
+            var input = $("prompt-input");
+            input.value = "";
+            input.focus();
+            document.querySelectorAll(".role.is-active").forEach(function (b) {
+              b.classList.remove("is-active"); b.setAttribute("aria-pressed", "false");
+            });
+            detail.hidden = true; detail.innerHTML = "";
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }
+        }
       });
 
       window.__demo = { pick: pick, runFromPrompt: runFromPrompt, runRandom: runRandom };

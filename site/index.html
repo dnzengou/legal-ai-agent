@@ -4,16 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="color-scheme" content="dark light">
-  <title>legal-ai-agent — First-pass contract review in minutes, not hours</title>
-  <meta name="description" content="Open-source contract review API. Ingest a contract (text or PDF), get clauses, risk flags, and citations anchored to the source. Powered by Claude.">
+  <title>legal-ai-agent — first-pass legal analysis in seconds</title>
+  <meta name="description" content="Paste a contract, an appeal, or a legal question. Get clauses, risks, citations, a safety score, and a first-pass response. Powered by Claude.">
 
-  <meta property="og:title" content="legal-ai-agent — Contract review in minutes">
-  <meta property="og:description" content="Open-source API that extracts clauses, flags risk, and cites the source. Self-host or use the managed tier.">
+  <meta property="og:title" content="legal-ai-agent — first-pass legal analysis in seconds">
+  <meta property="og:description" content="Paste any legal document. Get clauses, risks, a safety score, and cited recommendations.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://legal-ai-agent.fly.dev/">
   <meta name="twitter:card" content="summary">
 
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%234f9fff'/%3E%3Ctext x='16' y='22' font-family='system-ui' font-size='18' font-weight='700' text-anchor='middle' fill='%230a0e14'%3EL%3C/text%3E%3C/svg%3E">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%234f9fff'/%3E%3Cpath d='M11 12h10M11 16h10M11 20h6' stroke='%230a0e14' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="styles.css">
 
   <script type="application/ld+json">
@@ -23,10 +23,6 @@
     "name": "legal-ai-agent",
     "applicationCategory": "BusinessApplication",
     "operatingSystem": "Cross-platform",
-    "offers": [
-      { "@type": "Offer", "name": "Open Source", "price": "0", "priceCurrency": "EUR" },
-      { "@type": "Offer", "name": "Pro", "price": "9.99", "priceCurrency": "EUR" }
-    ],
     "url": "https://legal-ai-agent.fly.dev/",
     "codeRepository": "https://github.com/dnzengou/legal-ai-agent",
     "license": "https://github.com/dnzengou/legal-ai-agent/blob/main/LICENSE"
@@ -37,283 +33,133 @@
   <a class="skip-link" href="#main">Skip to main content</a>
 
   <header role="banner">
-    <div class="container">
-      <a class="brand" href="/" aria-label="legal-ai-agent home">legal-ai-agent<span class="brand-dot" aria-hidden="true">.</span></a>
-      <nav aria-label="Primary">
-        <ul>
-          <li><a href="#demo">Demo</a></li>
-          <li><a href="#how">How it works</a></li>
-          <li><a href="#usecases">Use cases</a></li>
-          <li><a href="#api">API</a></li>
-          <li><a href="#pricing">Pricing</a></li>
-          <li><a href="https://github.com/dnzengou/legal-ai-agent" rel="noopener">GitHub</a></li>
-        </ul>
-      </nav>
-    </div>
+    <a class="brand" href="/" aria-label="legal-ai-agent home">legal-ai-agent</a>
+    <nav aria-label="Primary">
+      <a href="https://github.com/dnzengou/legal-ai-agent" rel="noopener">GitHub</a>
+    </nav>
   </header>
 
   <main id="main">
-    <section class="hero" aria-labelledby="hero-h">
-      <div class="container">
-        <h1 id="hero-h">First-pass contract review in minutes, not hours.</h1>
-        <p class="lede">Send a contract — text or PDF — and get clauses, risk flags, a <strong>0–100 safety score</strong> with an <strong>A–F grade</strong>, compliance flags, and an executive summary back, with every excerpt cited to the source.</p>
-        <div class="hero-actions">
-          <a class="btn btn-primary" href="#demo">Try a sample review</a>
-          <a class="btn btn-secondary" href="https://github.com/dnzengou/legal-ai-agent" rel="noopener">View on GitHub</a>
+    <section class="stage" aria-labelledby="stage-h">
+      <h1 id="stage-h" class="wordmark">
+        <span class="wordmark-a">legal</span><span class="wordmark-dot">·</span><span class="wordmark-b">ai</span><span class="wordmark-dot">·</span><span class="wordmark-c">agent</span>
+      </h1>
+      <p class="tagline">First-pass legal analysis in seconds.<br class="tagline-break">Contracts, appeals, and everything you probably should have had a lawyer read.</p>
+
+      <form class="prompt" role="search" aria-label="Ask about any contract, appeal, or legal document" onsubmit="event.preventDefault(); window.__demo.runFromPrompt();">
+        <label for="prompt-input" class="sr-only">Contract, appeal, or legal question</label>
+        <div class="prompt-field">
+          <svg class="prompt-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+            <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/>
+            <path d="M16 16l5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <input id="prompt-input" name="q" type="text" autocomplete="off" spellcheck="false"
+                 placeholder="Paste a contract, appeal, or ask a legal question…"
+                 aria-describedby="prompt-hint">
         </div>
-        <p class="hero-meta">Open source · <strong>MIT license</strong> · Self-host with Docker or use the managed API.</p>
+        <div class="prompt-actions">
+          <button type="submit" class="btn btn-primary">Analyze</button>
+          <button type="button" class="btn btn-ghost" onclick="window.__demo.runRandom();">Try a sample</button>
+        </div>
+        <p id="prompt-hint" class="prompt-hint">
+          Try:
+          <button type="button" class="chip" onclick="window.__demo.pick('saas');">SaaS subscription</button>
+          <button type="button" class="chip" onclick="window.__demo.pick('nda');">Mutual NDA</button>
+          <button type="button" class="chip" onclick="window.__demo.pick('citizenship');">Svensk medborgarskap — överklagan</button>
+        </p>
+      </form>
+
+      <div class="roles" aria-label="Common use cases by role">
+        <p class="roles-label">Made for</p>
+        <div class="roles-chips" role="list">
+          <button type="button" class="role" role="listitem" data-role="creator">Creators</button>
+          <button type="button" class="role" role="listitem" data-role="entrepreneur">Entrepreneurs</button>
+          <button type="button" class="role" role="listitem" data-role="builder">Builders</button>
+          <button type="button" class="role" role="listitem" data-role="consultant">Consultants</button>
+          <button type="button" class="role" role="listitem" data-role="owner">Owners</button>
+          <button type="button" class="role" role="listitem" data-role="operator">Operators</button>
+        </div>
+        <div id="role-detail" class="role-detail" role="region" aria-live="polite" hidden></div>
       </div>
     </section>
 
-    <section id="demo" aria-labelledby="demo-h">
-      <div class="container">
-        <h2 id="demo-h">See a review, live</h2>
-        <p class="section-lede">Pick a sample contract and run it. This is the exact JSON shape the API returns — safety score, letter grade, risks, and compliance flags. No signup, runs in your browser.</p>
-
-        <div class="demo">
-          <div class="demo-controls">
-            <label class="demo-label" for="demo-sample">Sample contract</label>
-            <select id="demo-sample" class="demo-select">
-              <option value="saas">SaaS subscription (MSA) — auto-renewal + uncapped liability</option>
-              <option value="nda">Mutual NDA — perpetual confidentiality, no data terms</option>
-            </select>
-            <button id="demo-run" class="btn btn-primary" type="button" aria-controls="demo-result">Run sample review</button>
-          </div>
-
-          <div id="demo-result" class="demo-result" role="region" aria-live="polite" aria-label="Sample review result" hidden>
-            <div class="demo-scorecard">
-              <div class="score-ring" role="img" aria-label="Safety score">
-                <svg viewBox="0 0 120 120" width="120" height="120" aria-hidden="true">
-                  <circle class="ring-track" cx="60" cy="60" r="52" fill="none" stroke-width="10"></circle>
-                  <circle id="ring-arc" class="ring-arc" cx="60" cy="60" r="52" fill="none" stroke-width="10"
-                          stroke-linecap="round" transform="rotate(-90 60 60)"></circle>
-                </svg>
-                <div class="score-center">
-                  <span id="demo-score" class="score-num">—</span>
-                  <span id="demo-grade" class="score-grade">—</span>
-                </div>
-              </div>
-              <div class="demo-headline">
-                <p id="demo-verdict" class="demo-verdict">—</p>
-                <p id="demo-summary" class="demo-summary"></p>
-              </div>
-            </div>
-
-            <div class="demo-cols">
-              <div>
-                <h3 class="demo-h3">Risks</h3>
-                <ul id="demo-risks" class="badge-list" role="list"></ul>
-              </div>
-              <div>
-                <h3 class="demo-h3">Compliance</h3>
-                <ul id="demo-compliance" class="chip-list" role="list"></ul>
-              </div>
-            </div>
-
-            <div>
-              <h3 class="demo-h3">Recommendations</h3>
-              <ul id="demo-recs" class="rec-list" role="list"></ul>
-            </div>
-
-            <details class="demo-json">
-              <summary>View raw JSON response</summary>
-              <pre class="code"><code id="demo-json-body"></code></pre>
-            </details>
-
-            <p class="demo-disclaimer">Sample output for illustration — not legal advice. The live API computes the safety score server-side from the model's risks.</p>
+    <section id="result" class="result" role="region" aria-live="polite" aria-label="Analysis result" hidden>
+      <header class="result-head">
+        <div class="score-ring" role="img" aria-label="Safety score">
+          <svg viewBox="0 0 120 120" width="96" height="96" aria-hidden="true">
+            <circle class="ring-track" cx="60" cy="60" r="52" fill="none" stroke-width="10"></circle>
+            <circle id="ring-arc" class="ring-arc" cx="60" cy="60" r="52" fill="none" stroke-width="10"
+                    stroke-linecap="round" transform="rotate(-90 60 60)"></circle>
+          </svg>
+          <div class="score-center">
+            <span id="demo-score" class="score-num">—</span>
+            <span id="demo-grade" class="score-grade">—</span>
           </div>
         </div>
-      </div>
-    </section>
+        <div class="result-headline">
+          <p id="demo-verdict" class="verdict">—</p>
+          <p id="demo-summary" class="verdict-sub"></p>
+        </div>
+      </header>
 
-    <section id="how" aria-labelledby="how-h">
-      <div class="container">
-        <h2 id="how-h">How it works</h2>
-        <ol class="steps" role="list">
-          <li class="card">
-            <h3>POST your contract</h3>
-            <p>Send raw text to <code>/review</code> or a base64 PDF to <code>/review-pdf</code>. Up to 500k chars or 32MB.</p>
-          </li>
-          <li class="card">
-            <h3>Claude reviews it</h3>
-            <p>A senior-attorney prompt + adaptive thinking + structured outputs. No hallucinated clauses — excerpts are verbatim.</p>
-          </li>
-          <li class="card">
-            <h3>You get cited JSON</h3>
-            <p>Clauses, risks ranked by severity, recommendations, and character offsets anchoring each excerpt to your source.</p>
-          </li>
-        </ol>
-      </div>
-    </section>
-
-    <section id="usecases" aria-labelledby="usecases-h">
-      <div class="container">
-        <h2 id="usecases-h">Built for</h2>
-        <div class="grid">
-          <article class="card">
-            <h3>Legal ops teams</h3>
-            <p>Triage incoming vendor contracts before they reach counsel. Cut review queues by 60–80%.</p>
-          </article>
-          <article class="card">
-            <h3>In-house counsel</h3>
-            <p>First-pass summaries on NDAs, MSAs, and DPAs so you can focus on the negotiation, not the read.</p>
-          </article>
-          <article class="card">
-            <h3>SMBs without a GC</h3>
-            <p>Understand what you're signing. Get plain-English summaries and risk flags in under a minute.</p>
-          </article>
-          <article class="card">
-            <h3>Compliance + procurement</h3>
-            <p>Auto-flag auto-renewal, IP assignment, and unbounded liability before they enter your stack.</p>
-          </article>
+      <div class="result-cols">
+        <div>
+          <h2 id="risks-h" class="col-h">Issues identified</h2>
+          <ul id="demo-risks" class="badge-list" role="list" aria-labelledby="risks-h"></ul>
+        </div>
+        <div>
+          <h2 id="comp-h" class="col-h">Frameworks touched</h2>
+          <ul id="demo-compliance" class="chip-list" role="list" aria-labelledby="comp-h"></ul>
+          <h2 class="col-h col-h-second">Recommended next steps</h2>
+          <ul id="demo-recs" class="rec-list" role="list"></ul>
         </div>
       </div>
+
+      <details class="raw-json">
+        <summary>View raw JSON response</summary>
+        <pre class="code"><code id="demo-json-body"></code></pre>
+      </details>
+
+      <p class="disclaimer">Illustrative output. Not legal advice — always confirm with a licensed attorney. The live API computes safety score server-side from the model's findings.</p>
     </section>
 
-    <section id="api" aria-labelledby="api-h">
-      <div class="container">
-        <h2 id="api-h">One endpoint, structured output</h2>
-        <pre class="code" aria-label="Example API request and response"><code><span class="tok-comment"># Send a contract</span>
+    <section class="learn-more">
+      <details>
+        <summary>How it works</summary>
+        <div class="learn-body">
+          <ol>
+            <li>You paste a contract or appeal (text or PDF) — up to 500k chars.</li>
+            <li>Claude Opus 4.8 (or DeepSeek / other LLM) runs a senior-attorney prompt with adaptive thinking and structured outputs.</li>
+            <li>The server anchors every excerpt to your source and computes the safety score deterministically from the risks — the model can't inflate it.</li>
+          </ol>
+        </div>
+      </details>
+      <details>
+        <summary>API &amp; integration</summary>
+        <div class="learn-body">
+<pre class="code"><code><span class="tok-comment"># One endpoint · X-API-Key auth · JSON in/out</span>
 curl -X POST https://api.legal-ai-agent.fly.dev/review \
-  -H <span class="tok-string">"X-API-Key: $YOUR_KEY"</span> \
+  -H <span class="tok-string">"X-API-Key: $KEY"</span> \
   -H <span class="tok-string">"Content-Type: application/json"</span> \
-  -d '{<span class="tok-key">"contract_text"</span>: <span class="tok-string">"This Agreement is entered into..."</span>}'
-
-<span class="tok-comment"># Response — safety score + grade computed server-side, never trusted from the model</span>
-{
-  <span class="tok-key">"summary"</span>: <span class="tok-string">"Two-year SaaS subscription with auto-renewal..."</span>,
-  <span class="tok-key">"parties"</span>: [<span class="tok-string">"Acme Corp"</span>, <span class="tok-string">"Buyer LLC"</span>],
-  <span class="tok-key">"safety_score"</span>: 72,
-  <span class="tok-key">"letter_grade"</span>: <span class="tok-string">"C"</span>,
-  <span class="tok-key">"key_clauses"</span>: [{
-    <span class="tok-key">"type"</span>: <span class="tok-string">"auto_renewal"</span>,
-    <span class="tok-key">"text_excerpt"</span>: <span class="tok-string">"This Agreement shall automatically renew..."</span>,
-    <span class="tok-key">"char_start"</span>: 1842,
-    <span class="tok-key">"char_end"</span>: 1907
-  }],
-  <span class="tok-key">"risks"</span>: [{ <span class="tok-key">"severity"</span>: <span class="tok-string">"high"</span>, <span class="tok-key">"category"</span>: <span class="tok-string">"auto_renewal"</span>, ... }],
-  <span class="tok-key">"compliance_flags"</span>: [{ <span class="tok-key">"framework"</span>: <span class="tok-string">"GDPR"</span>, <span class="tok-key">"status"</span>: <span class="tok-string">"gap"</span>, ... }]
-}</code></pre>
-      </div>
-    </section>
-
-    <section id="pricing" aria-labelledby="pricing-h">
-      <div class="container">
-        <h2 id="pricing-h">Pricing</h2>
-        <div class="pricing">
-          <article class="tier" aria-labelledby="tier-oss">
-            <p class="tier-label">Self-host</p>
-            <h3 id="tier-oss">Open Source</h3>
-            <p class="price">€0<small> / forever</small></p>
-            <ul role="list">
-              <li>All features, no limits</li>
-              <li>Docker image (ARM64 + AMD64)</li>
-              <li>One-click Fly.io deploy</li>
-              <li>MIT license</li>
-              <li class="muted">No support SLA</li>
-            </ul>
-            <a class="btn btn-secondary" href="https://github.com/dnzengou/legal-ai-agent#quickstart" rel="noopener">Read the docs</a>
-          </article>
-
-          <article class="tier featured" aria-labelledby="tier-pro">
-            <p class="tier-label">Managed</p>
-            <h3 id="tier-pro">Pro</h3>
-            <p class="price">€9.99<small> / month</small></p>
-            <ul role="list">
-              <li>1,000 reviews / month</li>
-              <li>Hosted API, no infra</li>
-              <li>API key + per-IP rate limits</li>
-              <li>Citations + PDF support</li>
-              <li>Email support, 48h</li>
-            </ul>
-            <a class="btn btn-primary" href="#contact">Join waitlist</a>
-          </article>
-
-          <article class="tier" aria-labelledby="tier-ent">
-            <p class="tier-label">Custom</p>
-            <h3 id="tier-ent">Enterprise</h3>
-            <p class="price">Talk to us</p>
-            <ul role="list">
-              <li>Unlimited reviews</li>
-              <li>SLA + audit logs</li>
-              <li>On-prem or VPC deploy</li>
-              <li>Custom retention</li>
-              <li>Dedicated support</li>
-            </ul>
-            <a class="btn btn-secondary" href="#contact">Contact sales</a>
-          </article>
+  -d '{<span class="tok-key">"contract_text"</span>: <span class="tok-string">"…"</span>}'</code></pre>
+          <p>Full response shape (score, grade, risks, compliance, citations): see <a href="https://github.com/dnzengou/legal-ai-agent/blob/main/BLUEPRINT.md" rel="noopener">BLUEPRINT.md</a>. A zero-dependency Python client ships in <a href="https://github.com/dnzengou/legal-ai-agent/blob/main/examples/client.py" rel="noopener">examples/client.py</a>.</p>
         </div>
-      </div>
-    </section>
-
-    <section aria-labelledby="security-h">
-      <div class="container">
-        <h2 id="security-h">Security &amp; data handling</h2>
-        <div class="grid">
-          <article class="card">
-            <h3>No persistence by default</h3>
-            <p>Contracts are processed in memory and discarded after the response. Bring your own storage.</p>
-          </article>
-          <article class="card">
-            <h3>API key + rate limits</h3>
-            <p>Per-IP token bucket + header-based auth out of the box. Configurable via env, no code changes.</p>
-          </article>
-          <article class="card">
-            <h3>Open code, audit yourself</h3>
-            <p>Every prompt, every parser, every dependency is in the repo. Read it before you trust it.</p>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <section aria-labelledby="faq-h">
-      <div class="container">
-        <h2 id="faq-h">FAQ</h2>
-        <details class="faq">
-          <summary>Is this legal advice?</summary>
-          <p>No. This is a software tool that produces a structured first-pass review. Final judgment belongs to a qualified attorney. Output may be wrong; verify before acting.</p>
-        </details>
-        <details class="faq">
-          <summary>What model powers it?</summary>
-          <p>Anthropic's Claude Opus 4.8 with adaptive thinking and high reasoning effort, called through structured outputs so responses validate against a strict schema.</p>
-        </details>
-        <details class="faq">
-          <summary>Do you train on my contracts?</summary>
-          <p>No. We don't store contracts, and Anthropic's API doesn't train on inputs by default. If you're on the managed tier, your data stays your data.</p>
-        </details>
-        <details class="faq">
-          <summary>What jurisdictions does it understand?</summary>
-          <p>You can pass a <code>jurisdiction</code> hint (e.g. <code>"US-DE"</code> or <code>"EU"</code>) to tailor risk analysis. The underlying model has broad coverage of US and EU commercial law; specialized regions are best treated as advisory.</p>
-        </details>
-        <details class="faq">
-          <summary>What about accessibility?</summary>
-          <p>This site targets WCAG 2.2 AA: semantic HTML, 4.5:1 minimum contrast, keyboard-only navigation, <code>prefers-reduced-motion</code> support, forced-colors mode, and visible focus rings. <a href="https://github.com/dnzengou/legal-ai-agent/issues/new">Report any gaps</a> — they're treated as bugs.</p>
-        </details>
-      </div>
-    </section>
-
-    <section id="contact" aria-labelledby="contact-h">
-      <div class="container">
-        <h2 id="contact-h">Get in touch</h2>
-        <p>For Pro waitlist or Enterprise inquiries, email <a href="mailto:hello@legal-ai-agent.dev">hello@legal-ai-agent.dev</a> or open an issue on GitHub. We reply within two business days.</p>
-      </div>
+      </details>
     </section>
   </main>
 
   <footer role="contentinfo">
-    <div class="container">
-      <p>© 2026 legal-ai-agent · <a href="https://github.com/dnzengou/legal-ai-agent/blob/main/LICENSE" rel="noopener">MIT License</a></p>
-      <p><a href="https://github.com/dnzengou/legal-ai-agent" rel="noopener">GitHub</a> · <a href="https://github.com/dnzengou/legal-ai-agent/blob/main/BLUEPRINT.md" rel="noopener">Roadmap</a> · <a href="https://github.com/dnzengou/legal-ai-agent/blob/main/GTM.md" rel="noopener">Why we built this</a></p>
-    </div>
+    <p>Powered by Claude Opus 4.8 · Open source · <a href="https://github.com/dnzengou/legal-ai-agent/blob/main/LICENSE" rel="noopener">MIT</a> · <a href="https://github.com/dnzengou/legal-ai-agent" rel="noopener">GitHub</a></p>
   </footer>
 
   <script>
-    // Interactive sample review — canned data, runs fully client-side (no network, no signup).
-    // The score/grade here mirror the server's deterministic scoring: start at 100,
-    // deduct 20 per high risk, 8 per medium, 3 per low; A>=90 B>=80 C>=70 D>=60 else F.
+    // Client-side illustrative demo. Score and grade mirror the server's deterministic scoring:
+    // start at 100, deduct 20 per high, 8 per medium, 3 per low; A>=90 B>=80 C>=70 D>=60 else F.
     (function () {
       var SAMPLES = {
         saas: {
+          promptText: "SaaS subscription (MSA) with auto-renewal and no liability cap.",
+          issuesLabel: "Risks identified",
           parties: ["Acme SaaS Inc.", "Buyer Corp."],
           summary: "Two-year SaaS subscription that auto-renews without notice and caps nothing on the vendor's liability. Personal data is processed with no DPA.",
           risks: [
@@ -333,6 +179,8 @@ curl -X POST https://api.legal-ai-agent.fly.dev/review \
           ]
         },
         nda: {
+          promptText: "Mutual NDA with perpetual confidentiality, no carve-outs.",
+          issuesLabel: "Risks identified",
           parties: ["Discloser Ltd.", "Recipient LLC"],
           summary: "Mutual NDA with a perpetual confidentiality obligation and no carve-outs for independently developed information.",
           risks: [
@@ -345,6 +193,98 @@ curl -X POST https://api.legal-ai-agent.fly.dev/review \
           recommendations: [
             "Cap the confidentiality term at 3–5 years post-termination.",
             "Add standard carve-outs (public, independently developed, lawfully received)."
+          ]
+        },
+        citizenship: {
+          promptText: "Överklagan — Migrationsverket avslog min ansökan om svenskt medborgarskap.",
+          issuesLabel: "Grounds to strengthen in your appeal",
+          verdictOverride: {
+            A: "Strong case — file as drafted",
+            B: "Solid case — attach the recommended evidence",
+            C: "Moderate case — address each ground before filing",
+            D: "Weak case — supplementary evidence is essential",
+            F: "Very weak case — consider legal representation"
+          },
+          parties: ["Sökande (Applicant)", "Migrationsverket → Migrationsdomstolen"],
+          summary: "Migrationsverket rejected the naturalization application citing (i) identity not established and (ii) habitual residence period insufficient. The appeal should address both grounds with the supplementary evidence below, filed within the 3-week deadline under förvaltningslagen 44 §.",
+          risks: [
+            { severity: "high", category: "identity_not_established", description: "Migrationsverket relied on 12 § MedbL — identity requirement. Case law MIG 2019:20 accepts identity via civil records; the appeal must submit these (birth certificate, folkbokföring, passport)." },
+            { severity: "medium", category: "hemvist_calculation", description: "Habitual residence (hemvist) calculation excluded periods on a temporary permit. MIG 2013:23 clarifies which periods count — recompute and submit corrected timeline." },
+            { severity: "low", category: "muntlig_forhandling", description: "No oral hearing was requested. Consider requesting muntlig förhandling before Migrationsdomstolen to present identity evidence in person." }
+          ],
+          compliance: [
+            { framework: "MedbL 11 §", status: "unclear", note: "Habitual-residence requirement — depends on which periods count." },
+            { framework: "MedbL 12 §", status: "gap", note: "Identity requirement — supplementary documentation still needed." },
+            { framework: "FL 44 §", status: "compliant", note: "3-week appeal deadline — file via Migrationsverket for forwarding." }
+          ],
+          recommendations: [
+            "File the överklagan via Migrationsverket within 3 weeks of the decision date — they forward it to Migrationsdomstolen.",
+            "Attach certified copies of birth certificate, passport, and folkbokföring extract; cite MIG 2019:20 and MIG 2007:26 on establishing identity via civil documentation.",
+            "Submit a corrected hemvist timeline distinguishing permanent-residence periods (count) from tourist / short-stay periods (do not count).",
+            "Request muntlig förhandling — oral hearing before Migrationsdomstolen — to present identity evidence."
+          ]
+        }
+      };
+
+      var ROLES = {
+        creator: {
+          title: "For creators — musicians, artists, writers, filmmakers",
+          matters: [
+            "Licensing & sync — labels, platforms, brand deals; IP retention and reversion.",
+            "Commissioning agreements — deliverables, ownership, moral rights.",
+            "Collaboration & split sheets — who owns what, when things go well and when they don't.",
+            "Publishing & distribution — royalty accounting, audit rights, exclusivity limits.",
+            "Model release & likeness — usage windows, territories, personality rights."
+          ]
+        },
+        entrepreneur: {
+          title: "For entrepreneurs — founders raising, hiring, closing",
+          matters: [
+            "Term sheets & SAFEs — pro-rata, MFN, valuation caps, board control.",
+            "Cofounder & advisor agreements — vesting, IP assignment, non-competes.",
+            "Employment offers & options — cliff, acceleration, tax exposure.",
+            "Customer MSAs & DPAs — liability caps, indemnities, GDPR Article 28.",
+            "Partnership & JV terms — exclusivity, exit rights, deadlock resolution."
+          ]
+        },
+        builder: {
+          title: "For builders — engineers, designers, technical founders",
+          matters: [
+            "Terms of service & privacy — data flows, auto-renewal, liability.",
+            "Open-source & licensing — copyleft exposure, contributor agreements.",
+            "Vendor & API contracts — SLA, rate limits, IP over generated content.",
+            "Data processing (DPAs) — GDPR/CCPA, subprocessors, breach notification.",
+            "Employment IP assignment — carve-outs for pre-existing and side projects."
+          ]
+        },
+        consultant: {
+          title: "For consultants — solo advisors and independent professionals",
+          matters: [
+            "Statements of work — deliverables, milestones, change orders.",
+            "IP ownership — foreground vs background, license-backs.",
+            "Non-compete & non-solicit — enforceability, geographic scope.",
+            "Payment & termination — kill fees, late-payment interest, retainer.",
+            "Confidentiality — carve-outs so future clients aren't compromised."
+          ]
+        },
+        owner: {
+          title: "For owners — SMB / family business operators",
+          matters: [
+            "Employment agreements — at-will, non-solicit, garden leave.",
+            "Lease & real estate — CAM, renewal options, personal guarantees.",
+            "Supplier & franchise contracts — exclusivity, price change rights.",
+            "Insurance & indemnity — additional insured, subrogation waivers.",
+            "Succession & buy-sell — valuation triggers, spousal consent."
+          ]
+        },
+        operator: {
+          title: "For operators — GMs, ops leads, procurement",
+          matters: [
+            "Vendor onboarding — DPA, SIG-Lite, SOC 2, business-continuity terms.",
+            "SLA & credits — measurement windows, exclusions, remedies.",
+            "Auto-renewal & termination-for-convenience windows.",
+            "Data residency & subprocessors — GDPR chapter V, standard contractual clauses.",
+            "Compliance packages — GDPR/CCPA/HIPAA/PCI depending on stack."
           ]
         }
       };
@@ -363,7 +303,6 @@ curl -X POST https://api.legal-ai-agent.fly.dev/review \
         if (g === "C") return "var(--warning)";
         return "var(--danger)";
       }
-      // Verdict derives from the grade so it always matches the score.
       var VERDICT = {
         A: "Low risk — safe to sign",
         B: "Minor revisions recommended",
@@ -373,15 +312,16 @@ curl -X POST https://api.legal-ai-agent.fly.dev/review \
       };
 
       var $ = function (id) { return document.getElementById(id); };
-      var result = $("demo-result");
+      var result = $("result");
       var arc = $("ring-arc");
-      var CIRC = 2 * Math.PI * 52; // r=52
+      var CIRC = 2 * Math.PI * 52;
 
       function li(cls, html) { var el = document.createElement("li"); el.className = cls; el.innerHTML = html; return el; }
       function esc(t) { var d = document.createElement("div"); d.textContent = t; return d.innerHTML; }
 
       function render(key) {
         var data = SAMPLES[key];
+        if (!data) return;
         var s = score(data.risks);
         var g = grade(s);
         var color = gradeColor(g);
@@ -393,8 +333,12 @@ curl -X POST https://api.legal-ai-agent.fly.dev/review \
         arc.style.stroke = color;
         arc.style.strokeDasharray = CIRC;
         arc.style.strokeDashoffset = CIRC * (1 - s / 100);
-        $("demo-verdict").textContent = VERDICT[g];
+        $("demo-verdict").textContent = (data.verdictOverride && data.verdictOverride[g]) || VERDICT[g];
         $("demo-summary").textContent = data.summary;
+
+        // Column heading adapts (e.g. appeal has "grounds to strengthen")
+        var risksHeading = document.querySelector('[for-risks-heading]') || document.querySelector('#risks-h');
+        if (risksHeading) risksHeading.textContent = data.issuesLabel || "Issues identified";
 
         var risks = $("demo-risks"); risks.innerHTML = "";
         data.risks.forEach(function (r) {
@@ -406,14 +350,13 @@ curl -X POST https://api.legal-ai-agent.fly.dev/review \
 
         var comp = $("demo-compliance"); comp.innerHTML = "";
         data.compliance.forEach(function (c) {
-          comp.appendChild(li("chip chip-" + c.status,
+          comp.appendChild(li("chip-item chip-" + c.status,
             "<strong>" + esc(c.framework) + "</strong> · " + esc(c.status.replace(/_/g, " "))));
         });
 
         var recs = $("demo-recs"); recs.innerHTML = "";
         data.recommendations.forEach(function (rec) { recs.appendChild(li("", esc(rec))); });
 
-        // Raw JSON — the exact shape POST /review returns (score/grade are server-computed).
         var response = {
           summary: data.summary,
           parties: data.parties,
@@ -426,16 +369,51 @@ curl -X POST https://api.legal-ai-agent.fly.dev/review \
         $("demo-json-body").textContent = JSON.stringify(response, null, 2);
 
         result.hidden = false;
+        result.scrollIntoView({ behavior: "smooth", block: "start" });
       }
 
-      $("demo-run").addEventListener("click", function () {
-        render($("demo-sample").value);
-        result.setAttribute("tabindex", "-1");
-        result.focus({ preventScroll: false });
+      function pick(key) {
+        var input = $("prompt-input");
+        input.value = SAMPLES[key].promptText;
+        render(key);
+      }
+
+      function runFromPrompt() {
+        var text = ($("prompt-input").value || "").toLowerCase();
+        // Naïve matching of pasted / typed text to a sample. Real API call would go here.
+        if (/citizen|medborg|migrationsverk|överklag|overklag/i.test(text)) return render("citizenship");
+        if (/nda|non-disclos|confidential/i.test(text)) return render("nda");
+        if (/saas|subscription|auto-?renew|liab/i.test(text)) return render("saas");
+        // Default: run whichever contract sample seems most useful.
+        render("saas");
+      }
+
+      function runRandom() {
+        var keys = Object.keys(SAMPLES);
+        pick(keys[Math.floor(Math.random() * keys.length)]);
+      }
+
+      // Role reveal — click a chip → show top matters
+      var detail = $("role-detail");
+      document.querySelectorAll(".role").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          var role = btn.getAttribute("data-role");
+          var data = ROLES[role];
+          if (!data) return;
+          var wasActive = btn.classList.contains("is-active");
+          document.querySelectorAll(".role").forEach(function (b) { b.classList.remove("is-active"); b.setAttribute("aria-pressed", "false"); });
+          if (wasActive) { detail.hidden = true; detail.innerHTML = ""; return; }
+          btn.classList.add("is-active");
+          btn.setAttribute("aria-pressed", "true");
+          var html = "<p class=\"role-title\">" + esc(data.title) + "</p><ul class=\"role-matters\">";
+          data.matters.forEach(function (m) { html += "<li>" + esc(m) + "</li>"; });
+          html += "</ul>";
+          detail.innerHTML = html;
+          detail.hidden = false;
+        });
       });
-      $("demo-sample").addEventListener("change", function () {
-        if (!result.hidden) render(this.value);
-      });
+
+      window.__demo = { pick: pick, runFromPrompt: runFromPrompt, runRandom: runRandom };
     })();
   </script>
 </body>

@@ -1,4 +1,5 @@
 {
+  "git": { "deploymentEnabled": false },
   "buildCommand": "echo 'static site — no build'",
   "outputDirectory": "site",
   "cleanUrls": true,

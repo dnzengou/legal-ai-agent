@@ -19,7 +19,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-VERSION = "0.6.1"
+VERSION = "0.7.0"
 
 app = FastAPI(
     title="legal-ai-agent",

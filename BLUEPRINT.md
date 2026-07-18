@@ -1,6 +1,6 @@
 # legal-ai-agent — Blueprint
 
-**Version:** 0.7.1
+**Version:** 0.7.2
 **Date:** 2026-07-17
 **Status:** lean single-product API — auth · rate limit · citations · safety scoring · compliance flags · prod hardening · **search-first landing** · Python client
 
@@ -137,3 +137,15 @@ Same response shape; request body:
 | 0.6.1   | 2026-06-28 | Commercial low-hanging fruit: interactive **live demo** on the landing page (client-side sample review — score ring, A–F grade, risk badges, compliance chips; verified light/dark, WCAG AA); refreshed landing value props + API example to show `safety_score`/`letter_grade`/`compliance_flags`; **dependency-free Python client** (`examples/client.py`) + 7 tests; `X-Request-ID` now echoed on sanitized 500s |
 | 0.7.0   | 2026-07-16 | **Less is more:** retired the unbuilt React/Hono frontend (142 files, ~100 npm deps, Vite/tRPC/Drizzle toolchain) that never deployed. Repo is now one coherent product — the FastAPI contract-review API + static landing page. No cross-imports removed anything from the Python app (55 tests still green). Trimmed `.env.example` to API vars, streamlined `BLUEPRINT.md` to a single blueprint, and pointed Vercel at the static `site/` (zero build). |
 | 0.7.1   | 2026-07-17 | **Search-first UX:** landing page rebuilt as a Google-search-like fold — big centered wordmark, prompt input, 3 sample chips, minimal chrome. Cut 9 sections down to 1 stage + 1 result + collapsed "learn more". Added the **Svensk medborgarskap överklagan** sample (Migrationsverket appeal with adaptive verdict, MedbL 11§/12§ + FL 44§ citations, MIG 2019:20 case law). Added **role reveal chips** — Creators / Entrepreneurs / Builders / Consultants / Owners / Operators — each with the top 5 legal matters for that profile. Verified light + dark, 55 tests green. |
+| 0.7.2   | 2026-07-17 | **UX polish (E→Im pass):** autofocus prompt on load · `/` keyboard shortcut to jump focus (with subtle `kbd` hint in the input) · Escape resets stage · **illustrative-sample badge** on the result panel with a "Call the live API" link (so nobody mistakes the client-side demo for a real analysis of typed text). CLAUDE.md landing description synced. 55 tests green. |
+
+## Session lessons (evo-metaclaw)
+
+Extracted patterns from the v0.5 → v0.7 arc, kept here so future sessions can inherit them.
+
+- **Aggressive subtraction beats debugging** — v0.7.0 removed 142 files of unbuilt frontend and resolved the entire multi-week Vercel saga by *not shipping the broken thing*. The signal: when a system's config is opaque (Vercel dashboard, in this case) and repo-side changes fail 4+ times in a row, stop pushing and change what you deploy, not how you deploy it.
+- **Server-owned truth beats model-owned truth** — the safety score and grade are computed deterministically from the model's risk list, never taken from the model. Same idea as the citation offset anchoring. Makes the number testable offline, immune to model drift, and impossible to inflate. Pattern generalizes to any LLM output that carries a verifiable number.
+- **Sample-driven demos > docs** — the interactive `site/` demo converted more skepticism into engagement than any tier-comparison table would. Adding the Svensk medborgarskap sample made the tool's generality *concrete* in a way "we also support appeals" never could.
+- **Adaptive verdict language > forced consistency** — the same score-ring UI serves both contract review ("Do not sign as-is") and appeal drafting ("Weak case — supplementary evidence essential") through a per-sample `verdictOverride`. Less code than a fork, more clarity than a shared verbose label.
+- **Ask when scopes diverge** — when the Vercel deploy could be fixed by three genuinely different paths (repo, dashboard, disable), AskUserQuestion cut the round-trip loop that had been failing. Don't guess at reversibility questions.
+- **Illustrative ≠ live** — the v0.7.2 badge (`Illustrative sample — this preview runs client-side`) came from noticing the demo *looked* like a real analysis of typed text. When a UI simulates real behavior, disclose it or make it real — halfway is misleading.

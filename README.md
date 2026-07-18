@@ -100,10 +100,14 @@ All via env; see [.env.example](./.env.example).
 
 ## Deploy
 
-### Fly.io
+Two things to deploy: **the API** (Python, Anthropic key required, long-running) and **the landing page** (static HTML + CSS, no build). They ship to different hosts.
+
+### API — Fly.io *(recommended)*
+
+The `fly.toml` and `Dockerfile` are pre-wired for a 512 MB shared-CPU machine in `iad`.
 
 ```bash
-fly launch                                       # one-time
+fly launch                                       # one-time — accepts fly.toml
 fly secrets set ANTHROPIC_API_KEY=sk-ant-...
 fly secrets set API_KEYS=key-1,key-2
 fly secrets set TRUST_PROXY_HEADERS=true         # Fly sits in front
@@ -112,7 +116,7 @@ fly status
 curl https://<your-app>.fly.dev/health
 ```
 
-### Docker
+### API — Docker (any container host: Railway, Render, ECS, Cloud Run, self-host)
 
 ```bash
 docker buildx build --platform linux/arm64 -t legal-ai-agent .
@@ -122,9 +126,29 @@ docker run -p 8000:8000 \
   legal-ai-agent
 ```
 
-The container runs as a non-root user with a `/health` HEALTHCHECK probe.
+Non-root user, `/health` HEALTHCHECK probe. ARM64 + AMD64 images are built and pushed to **GHCR** on every push to `main` via [.github/workflows/ci.yml](./.github/workflows/ci.yml) — no config needed. Image lands at `ghcr.io/dnzengou/legal-ai-agent:latest`.
 
-ARM64 images are built and pushed to GHCR on every `main` push via [.github/workflows](./.github/workflows).
+### Landing page — pick one
+
+The `site/` folder is a self-contained static page. Deploy it anywhere; three zero-config paths, easiest first:
+
+**GitHub Pages *(auto, no signup)*** — [.github/workflows/pages.yml](./.github/workflows/pages.yml) publishes `site/` on every push to `main` that touches it. One-time setup: on GitHub → **Settings → Pages → Source: GitHub Actions**. Live at `https://<owner>.github.io/legal-ai-agent/`.
+
+**Netlify *(free tier, connect via UI)*** — `netlify.toml` in the repo root sets `publish = "site"` and no build command. At [netlify.com](https://netlify.com) → *Add new site* → *Import from Git* → pick this repo → Deploy. Auto-deploys on every push.
+
+**Vercel *(same idea)*** — `vercel.json` is configured; a zero-dep `package.json` copies `site/` → `dist/` so any forced build succeeds. At [vercel.com](https://vercel.com) → *Add New… → Project* → pick this repo → Deploy. If the dashboard forces a framework preset the deploy will fail; set **Settings → Build & Development → Framework Preset: Other** to let `vercel.json` take effect, then remove `"git": { "deploymentEnabled": false }` from `vercel.json`.
+
+**Any static host** — `site/` is two files. Copy them to S3 + CloudFront, Cloudflare Pages, Surge, an nginx box, etc.
+
+### One-command deploy (bird's-eye)
+
+| Target | Command / step | Cost | Notes |
+|--------|----------------|------|-------|
+| API → Fly.io | `fly deploy` | free tier available | The product's home. Native ARM64. |
+| API → Any Docker host | `docker run ghcr.io/dnzengou/legal-ai-agent:latest` | depends | Auto-pushed to GHCR. |
+| Landing → GitHub Pages | Push to `main` (workflow ships) | free | Enable in repo Settings → Pages once. |
+| Landing → Netlify | Import repo in Netlify UI | free tier | `netlify.toml` handles config. |
+| Landing → Vercel | Import repo in Vercel UI | free tier | `vercel.json` handles config; see caveat above. |
 
 ## Security
 

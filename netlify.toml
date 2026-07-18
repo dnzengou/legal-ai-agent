@@ -1,0 +1,13 @@
+# Netlify config — static landing page, no build step.
+# Connect the repo at netlify.com and Netlify will auto-detect this file.
+
+[build]
+  publish = "site"
+  command = "echo 'static site — no build'"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    Referrer-Policy = "strict-origin-when-cross-origin"

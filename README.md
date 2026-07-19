@@ -4,7 +4,9 @@ Open-source contract review API. Send a contract (text or PDF), get back parties
 
 Powered by Claude Opus 4.8 with adaptive thinking, structured outputs, and native PDF support.
 
-- [Landing page & pricing](./site/index.html)
+**→ Live demo: [legal-ai-agent.netlify.app](https://legal-ai-agent.netlify.app)** — search-first landing with interactive samples (SaaS · NDA · Svensk medborgarskap överklagan).
+
+- [Landing page source](./site/index.html)
 - [Roadmap](./BLUEPRINT.md)
 - [Go-to-market](./GTM.md)
 
@@ -134,7 +136,7 @@ The `site/` folder is a self-contained static page. Deploy it anywhere; three ze
 
 **GitHub Pages *(auto, no signup)*** — [.github/workflows/pages.yml](./.github/workflows/pages.yml) publishes `site/` on every push to `main` that touches it. One-time setup: on GitHub → **Settings → Pages → Source: GitHub Actions**. Live at `https://<owner>.github.io/legal-ai-agent/`.
 
-**Netlify *(free tier, connect via UI)*** — `netlify.toml` in the repo root sets `publish = "site"` and no build command. At [netlify.com](https://netlify.com) → *Add new site* → *Import from Git* → pick this repo → Deploy. Auto-deploys on every push.
+**Netlify *(free tier, connect via UI — currently live)*** — `netlify.toml` in the repo root sets `publish = "site"` and no build command. At [netlify.com](https://netlify.com) → *Add new site* → *Import from Git* → pick this repo → Deploy. Auto-deploys on every push. Live at [legal-ai-agent.netlify.app](https://legal-ai-agent.netlify.app).
 
 **Vercel *(same idea)*** — `vercel.json` is configured; a zero-dep `package.json` copies `site/` → `dist/` so any forced build succeeds. At [vercel.com](https://vercel.com) → *Add New… → Project* → pick this repo → Deploy. If the dashboard forces a framework preset the deploy will fail; set **Settings → Build & Development → Framework Preset: Other** to let `vercel.json` take effect, then remove `"git": { "deploymentEnabled": false }` from `vercel.json`.
 
@@ -149,6 +151,18 @@ The `site/` folder is a self-contained static page. Deploy it anywhere; three ze
 | Landing → GitHub Pages | Push to `main` (workflow ships) | free | Enable in repo Settings → Pages once. |
 | Landing → Netlify | Import repo in Netlify UI | free tier | `netlify.toml` handles config. |
 | Landing → Vercel | Import repo in Vercel UI | free tier | `vercel.json` handles config; see caveat above. |
+
+### Custom domain
+
+The `*.netlify.app` / `*.vercel.app` / `*.github.io` URLs are fine for launch. To swap in your own domain (say `legal.example.com` or `legal-ai-agent.dev`):
+
+**On Netlify** — Site → *Domain management* → *Add a domain*. Netlify walks you through DNS. Fastest path: use Netlify DNS (change the domain's nameservers) — automatic SSL, no per-record work. Alternative: keep your existing DNS provider and add either an `A` record pointing at `75.2.60.5` (apex) or a `CNAME` to `<your-site>.netlify.app` (subdomain). Let's Encrypt certs are issued automatically once DNS propagates.
+
+**On Vercel** — Project → *Settings → Domains* → add the domain. Vercel shows the exact `A` or `CNAME` record to add at your DNS provider; SSL is automatic.
+
+**On GitHub Pages** — repo → *Settings → Pages → Custom domain* — enter the domain, tick *Enforce HTTPS*, and add a `CNAME` pointing at `<owner>.github.io` (or the four apex `A` records GitHub documents). Add a `CNAME` file to `site/` too so future deploys don't reset it.
+
+Once the domain is live, update `og:url` and `canonical` in [`site/index.html`](./site/index.html) so social embeds and search engines point at it.
 
 ## Security
 

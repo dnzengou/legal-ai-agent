@@ -88,7 +88,7 @@
     <section id="result" class="result" role="region" aria-live="polite" aria-label="Analysis result" hidden>
       <p class="illustrative-badge">
         <span class="illustrative-dot" aria-hidden="true"></span>
-        Illustrative sample — this preview runs client-side. <a href="https://github.com/dnzengou/legal-ai-agent#call-it" rel="noopener">Call the live API</a> to analyze your own document.
+        Illustrative sample — this preview runs client-side. Every finding shows a <strong>verbatim citation from source</strong> (✓ cited). Unquotable findings are auto-downgraded — see the confidence score. <a href="https://github.com/dnzengou/legal-ai-agent#call-it" rel="noopener">Call the live API</a> to analyze your own document.
       </p>
       <header class="result-head">
         <div class="score-ring" role="img" aria-label="Safety score">
@@ -105,6 +105,7 @@
         <div class="result-headline">
           <p id="demo-verdict" class="verdict">—</p>
           <p id="demo-summary" class="verdict-sub"></p>
+          <p id="demo-confidence" class="confidence-pill" title="Deterministic score: how well-cited the findings are">Confidence — · —</p>
         </div>
       </header>
 
@@ -162,21 +163,26 @@ curl -X POST https://api.legal-ai-agent.fly.dev/review \
     // Client-side illustrative demo. Score and grade mirror the server's deterministic scoring:
     // start at 100, deduct 20 per high, 8 per medium, 3 per low; A>=90 B>=80 C>=70 D>=60 else F.
     (function () {
+      // Each sample carries a `source` string. Every risk/flag has a `quote` — the exact
+      // verbatim excerpt from `source`. The demo anchors quotes client-side (same logic
+      // the server uses) so you can see the glass-box: green tick when the citation was
+      // found in source, red badge when it wasn't (would be a hallucination in production).
       var SAMPLES = {
         saas: {
           promptText: "SaaS subscription (MSA) with auto-renewal and no liability cap.",
           issuesLabel: "Risks identified",
           parties: ["Acme SaaS Inc.", "Buyer Corp."],
           summary: "Two-year SaaS subscription that auto-renews without notice and caps nothing on the vendor's liability. Personal data is processed with no DPA.",
+          source: "This Agreement shall automatically renew for successive twelve (12) month terms unless terminated by written notice. Vendor's aggregate liability shall be unlimited. All work product, deliverables, and derivative works shall be the exclusive intellectual property of the Vendor. This Agreement shall be governed by the laws of the Cayman Islands. Customer personal data may be processed by Vendor and its sub-processors.",
           risks: [
-            { severity: "high", category: "uncapped_liability", description: "No limitation-of-liability clause — exposure is unbounded." },
-            { severity: "high", category: "auto_renewal", description: "Renews for successive 12-month terms with no opt-out window." },
-            { severity: "medium", category: "ip_assignment", description: "Work product IP assigns to the vendor, not the customer." },
-            { severity: "low", category: "governing_law", description: "Foreign choice of law without an arbitration fallback." }
+            { severity: "high", category: "uncapped_liability", description: "No limitation-of-liability clause — exposure is unbounded.", confidence: "high", quote: "Vendor's aggregate liability shall be unlimited." },
+            { severity: "high", category: "auto_renewal", description: "Renews for successive 12-month terms with no opt-out window.", confidence: "high", quote: "This Agreement shall automatically renew for successive twelve (12) month terms unless terminated by written notice." },
+            { severity: "medium", category: "ip_assignment", description: "Work product IP assigns to the vendor, not the customer.", confidence: "high", quote: "All work product, deliverables, and derivative works shall be the exclusive intellectual property of the Vendor." },
+            { severity: "low", category: "governing_law", description: "Foreign choice of law without an arbitration fallback.", confidence: "medium", quote: "This Agreement shall be governed by the laws of the Cayman Islands." }
           ],
           compliance: [
-            { framework: "GDPR", status: "gap", note: "No Article 28 data-processing agreement." },
-            { framework: "SOC2", status: "unclear", note: "Security controls not referenced." }
+            { framework: "GDPR", status: "gap", note: "No Article 28 data-processing agreement.", confidence: "high", quote: "Customer personal data may be processed by Vendor and its sub-processors." },
+            { framework: "SOC2", status: "unclear", note: "Security controls not referenced.", confidence: "low", quote: null }
           ],
           recommendations: [
             "Add a mutual liability cap (e.g. 12 months of fees).",
@@ -189,12 +195,13 @@ curl -X POST https://api.legal-ai-agent.fly.dev/review \
           issuesLabel: "Risks identified",
           parties: ["Discloser Ltd.", "Recipient LLC"],
           summary: "Mutual NDA with a perpetual confidentiality obligation and no carve-outs for independently developed information.",
+          source: "Recipient's obligations of confidentiality shall survive in perpetuity. Confidential Information means any and all information disclosed by Discloser, in any form, whether marked confidential or not.",
           risks: [
-            { severity: "medium", category: "perpetual_obligation", description: "Confidentiality never expires — prefer a 3–5 year term." },
-            { severity: "low", category: "definitions", description: "“Confidential Information” is broad and undefined at the edges." }
+            { severity: "medium", category: "perpetual_obligation", description: "Confidentiality never expires — prefer a 3–5 year term.", confidence: "high", quote: "Recipient's obligations of confidentiality shall survive in perpetuity." },
+            { severity: "low", category: "definitions", description: "“Confidential Information” is broad and undefined at the edges.", confidence: "medium", quote: "Confidential Information means any and all information disclosed by Discloser, in any form, whether marked confidential or not." }
           ],
           compliance: [
-            { framework: "GDPR", status: "not_applicable", note: "No personal data in scope." }
+            { framework: "GDPR", status: "not_applicable", note: "No personal data in scope.", confidence: "medium", quote: null }
           ],
           recommendations: [
             "Cap the confidentiality term at 3–5 years post-termination.",
@@ -213,15 +220,16 @@ curl -X POST https://api.legal-ai-agent.fly.dev/review \
           },
           parties: ["Sökande (Applicant)", "Migrationsverket → Migrationsdomstolen"],
           summary: "Migrationsverket rejected the naturalization application citing (i) identity not established and (ii) habitual residence period insufficient. The appeal should address both grounds with the supplementary evidence below, filed within the 3-week deadline under förvaltningslagen 44 §.",
+          source: "Migrationsverket avslår ansökan. Identiteten är inte styrkt enligt 12 § medborgarskapslagen. Hemvisttiden är inte tillräcklig då tid på tillfälligt uppehållstillstånd inte räknas. Beslutet kan överklagas inom tre veckor från delgivningsdatum.",
           risks: [
-            { severity: "high", category: "identity_not_established", description: "Migrationsverket relied on 12 § MedbL — identity requirement. Case law MIG 2019:20 accepts identity via civil records; the appeal must submit these (birth certificate, folkbokföring, passport)." },
-            { severity: "medium", category: "hemvist_calculation", description: "Habitual residence (hemvist) calculation excluded periods on a temporary permit. MIG 2013:23 clarifies which periods count — recompute and submit corrected timeline." },
-            { severity: "low", category: "muntlig_forhandling", description: "No oral hearing was requested. Consider requesting muntlig förhandling before Migrationsdomstolen to present identity evidence in person." }
+            { severity: "high", category: "identity_not_established", description: "Migrationsverket relied on 12 § MedbL — identity requirement. Case law MIG 2019:20 accepts identity via civil records; the appeal must submit these (birth certificate, folkbokföring, passport).", confidence: "high", quote: "Identiteten är inte styrkt enligt 12 § medborgarskapslagen." },
+            { severity: "medium", category: "hemvist_calculation", description: "Habitual residence (hemvist) calculation excluded periods on a temporary permit. MIG 2013:23 clarifies which periods count — recompute and submit corrected timeline.", confidence: "high", quote: "Hemvisttiden är inte tillräcklig då tid på tillfälligt uppehållstillstånd inte räknas." },
+            { severity: "low", category: "muntlig_forhandling", description: "No oral hearing was requested. Consider requesting muntlig förhandling before Migrationsdomstolen to present identity evidence in person.", confidence: "low", quote: null }
           ],
           compliance: [
-            { framework: "MedbL 11 §", status: "unclear", note: "Habitual-residence requirement — depends on which periods count." },
-            { framework: "MedbL 12 §", status: "gap", note: "Identity requirement — supplementary documentation still needed." },
-            { framework: "FL 44 §", status: "compliant", note: "3-week appeal deadline — file via Migrationsverket for forwarding." }
+            { framework: "MedbL 11 §", status: "unclear", note: "Habitual-residence requirement — depends on which periods count.", confidence: "medium", quote: "Hemvisttiden är inte tillräcklig då tid på tillfälligt uppehållstillstånd inte räknas." },
+            { framework: "MedbL 12 §", status: "gap", note: "Identity requirement — supplementary documentation still needed.", confidence: "high", quote: "Identiteten är inte styrkt enligt 12 § medborgarskapslagen." },
+            { framework: "FL 44 §", status: "compliant", note: "3-week appeal deadline — file via Migrationsverket for forwarding.", confidence: "high", quote: "Beslutet kan överklagas inom tre veckor från delgivningsdatum." }
           ],
           recommendations: [
             "File the överklagan via Migrationsverket within 3 weeks of the decision date — they forward it to Migrationsdomstolen.",
@@ -325,12 +333,40 @@ curl -X POST https://api.legal-ai-agent.fly.dev/review \
       function li(cls, html) { var el = document.createElement("li"); el.className = cls; el.innerHTML = html; return el; }
       function esc(t) { var d = document.createElement("div"); d.textContent = t; return d.innerHTML; }
 
+      // Anti-hallucination: anchor a quote to source, downgrade unanchored findings,
+      // then compute overall confidence. Mirrors src/confidence.py + agent._anchor_clauses.
+      var CONF_W = { high: 1.0, medium: 0.6, low: 0.3 };
+      function anchorAndScore(findings, source) {
+        var anchored = 0, self = 0;
+        findings.forEach(function (f) {
+          f.__anchored = false;
+          if (f.quote && source && source.indexOf(f.quote) >= 0) {
+            f.__anchored = true;
+            anchored++;
+          } else if (!f.quote || !source || source.indexOf(f.quote) < 0) {
+            // anti-hallucination: unanchored → force low
+            f.confidence = "low";
+          }
+          self += CONF_W[f.confidence] || 0.3;
+        });
+        if (!findings.length) return { overall: 100, level: "high" };
+        var overall = Math.max(0, Math.min(100, Math.round(
+          50 * (anchored / findings.length) + 50 * (self / findings.length)
+        )));
+        var level = overall >= 80 ? "high" : overall >= 60 ? "medium" : "low";
+        return { overall: overall, level: level };
+      }
+
       function render(key) {
         var data = SAMPLES[key];
         if (!data) return;
         var s = score(data.risks);
         var g = grade(s);
         var color = gradeColor(g);
+
+        // Anti-hallucination pass — mutates confidence on unanchored findings
+        var allFindings = data.risks.concat(data.compliance);
+        var conf = anchorAndScore(allFindings, data.source || "");
 
         $("demo-score").textContent = s;
         var gradeEl = $("demo-grade");
@@ -342,8 +378,16 @@ curl -X POST https://api.legal-ai-agent.fly.dev/review \
         $("demo-verdict").textContent = (data.verdictOverride && data.verdictOverride[g]) || VERDICT[g];
         $("demo-summary").textContent = data.summary;
 
+        // Confidence pill (glass-box signal)
+        var pill = $("demo-confidence");
+        var confColor = conf.level === "high" ? "var(--success)" : conf.level === "medium" ? "var(--warning)" : "var(--danger)";
+        pill.textContent = "Confidence " + conf.overall + " · " + conf.level;
+        pill.style.color = confColor;
+        pill.style.borderColor = confColor;
+        pill.title = "Deterministic score: 50% from citation anchoring rate, 50% from per-finding self-confidence. Unanchored findings are auto-downgraded to low.";
+
         // Column heading adapts (e.g. appeal has "grounds to strengthen")
-        var risksHeading = document.querySelector('[for-risks-heading]') || document.querySelector('#risks-h');
+        var risksHeading = document.querySelector('#risks-h');
         if (risksHeading) risksHeading.textContent = data.issuesLabel || "Issues identified";
 
         var risks = $("demo-risks"); risks.innerHTML = "";
@@ -351,26 +395,46 @@ curl -X POST https://api.legal-ai-agent.fly.dev/review \
           risks.appendChild(li("badge badge-" + r.severity,
             "<span class=\"badge-sev\">" + r.severity + "</span> " +
             "<span class=\"badge-cat\">" + esc(r.category.replace(/_/g, " ")) + "</span>" +
-            "<span class=\"badge-desc\">" + esc(r.description) + "</span>"));
+            "<span class=\"badge-conf badge-conf-" + r.confidence + "\">" + r.confidence + " conf</span>" +
+            "<span class=\"badge-desc\">" + esc(r.description) + "</span>" +
+            (r.__anchored
+              ? "<blockquote class=\"cite\"><span class=\"cite-mark\" title=\"Anchored to source\">✓ cited</span> " + esc(r.quote) + "</blockquote>"
+              : "<span class=\"cite-missing\" title=\"Would be flagged as hallucination in production\">no verbatim citation</span>")
+          ));
         });
 
         var comp = $("demo-compliance"); comp.innerHTML = "";
         data.compliance.forEach(function (c) {
           comp.appendChild(li("chip-item chip-" + c.status,
-            "<strong>" + esc(c.framework) + "</strong> · " + esc(c.status.replace(/_/g, " "))));
+            "<strong>" + esc(c.framework) + "</strong> · " + esc(c.status.replace(/_/g, " ")) +
+            (c.__anchored ? " <span class=\"chip-cite\" title=\"Anchored to source\">✓</span>" : "")
+          ));
         });
 
         var recs = $("demo-recs"); recs.innerHTML = "";
         data.recommendations.forEach(function (rec) { recs.appendChild(li("", esc(rec))); });
 
+        // Raw JSON — the exact shape POST /review returns (score/grade/confidence server-computed).
         var response = {
           summary: data.summary,
           parties: data.parties,
-          risks: data.risks,
-          compliance_flags: data.compliance,
+          risks: data.risks.map(function (r) {
+            return {
+              severity: r.severity, category: r.category, description: r.description,
+              confidence: r.confidence,
+              provenance: { text_excerpt: r.quote, anchored: !!r.__anchored }
+            };
+          }),
+          compliance_flags: data.compliance.map(function (c) {
+            return {
+              framework: c.framework, status: c.status, note: c.note,
+              confidence: c.confidence,
+              provenance: c.quote ? { text_excerpt: c.quote, anchored: !!c.__anchored } : null
+            };
+          }),
           recommendations: data.recommendations,
-          safety_score: s,
-          letter_grade: g
+          safety_score: s, letter_grade: g,
+          overall_confidence: conf.overall, confidence_level: conf.level
         };
         $("demo-json-body").textContent = JSON.stringify(response, null, 2);
 

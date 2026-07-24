@@ -2,6 +2,8 @@
 
 Open-source contract review API. Send a contract (text or PDF), get back parties, key clauses with character-offset citations, risk flags, a 0–100 safety score with an A–F grade, per-framework compliance flags, and recommendations — validated against a strict JSON schema.
 
+**Glass-box, not black-box.** Every risk and compliance flag ships with a verbatim `provenance.text_excerpt` from the source. The server anchors each excerpt back to the input by character-for-character match; any finding whose citation is not present verbatim is auto-downgraded to low confidence. A deterministic `overall_confidence` score (0–100) tells you how well-grounded the whole review is — **the model literally cannot fabricate a citation without the server catching it.**
+
 Powered by Claude Opus 4.8 with adaptive thinking, structured outputs, and native PDF support.
 
 **→ Live demo: [legal-ai-agent.netlify.app](https://legal-ai-agent.netlify.app)** — search-first landing with interactive samples (SaaS · NDA · Svensk medborgarskap överklagan).
@@ -18,7 +20,7 @@ cp .env.example .env
 # set API_KEYS to a comma-separated allowlist for production
 
 pip install -r requirements-dev.txt
-pytest -q                      # 51 tests, no network
+pytest -q                      # 72 tests, no network
 uvicorn api.app:app --reload --port 8000
 ```
 

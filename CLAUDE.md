@@ -23,6 +23,7 @@ src/agent.py        LegalAgent class — single review() entrypoint
 src/prompts.py      System prompt + JSON schema
 src/schema.py       Pydantic models for request/response
 src/scoring.py      Deterministic safety score (0-100) + letter grade (A-F)
+src/confidence.py   Anti-hallucination: deterministic overall confidence + unanchored-finding downgrade
 examples/client.py  Dependency-free (stdlib) Python client — copy-paste, no pip install
 site/index.html     Search-first landing (Google-style stage) + sample demo (SaaS · NDA · svensk medborgarskap överklagan) + role reveals
 tests/              Smoke + scoring + app + auth + rate-limit + anchoring + client tests (no network — mocked)
@@ -61,7 +62,8 @@ fly deploy
 - Stream responses if `max_tokens > 16000`
 - Use `client.messages.parse()` for structured outputs (auto-validates)
 - Errors: surface as HTTP 4xx/5xx with sanitized messages, never echo API keys
-- Verifiable values (safety score, citation offsets) are computed server-side, never trusted from the model — the model proposes, the server owns the number
+- Verifiable values (safety score, citation offsets, confidence score) are computed server-side, never trusted from the model — the model proposes, the server owns the number
+- **Anti-hallucination gate:** every `Risk` and `ComplianceFlag` must carry a `Provenance.text_excerpt`; the server anchors it to source by exact substring match; unanchored → confidence auto-downgraded to `low`; `overall_confidence` reflects the anchoring rate. The model cannot fabricate a citation without the server catching it.
 
 ## Short-command grammar (DevFlow / KafCa / Evolve)
 

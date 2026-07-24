@@ -1,8 +1,8 @@
 # legal-ai-agent — Blueprint
 
-**Version:** 0.7.2
-**Date:** 2026-07-17
-**Status:** lean single-product API — auth · rate limit · citations · safety scoring · compliance flags · prod hardening · **search-first landing** · Python client
+**Version:** 0.7.3
+**Date:** 2026-07-23
+**Status:** lean single-product API — auth · rate limit · citations · safety scoring · compliance flags · prod hardening · search-first landing · Python client · **provenance-enabled anti-hallucination**
 
 ## Mission
 
@@ -91,14 +91,34 @@ Response:
     }
   ],
   "risks": [
-    { "severity": "low|medium|high", "category": "string", "description": "string", "clause_ref": "string" }
+    {
+      "severity": "low|medium|high",
+      "category": "string",
+      "description": "string",
+      "clause_ref": "string",
+      "confidence": "high|medium|low (model self-report; server downgrades to 'low' if provenance did not anchor)",
+      "provenance": {
+        "text_excerpt": "string (verbatim quote from source ≤500 chars)",
+        "char_start": "int|null (server-filled)",
+        "char_end": "int|null (server-filled)",
+        "anchored": "bool (server-filled: true iff excerpt found character-for-character in source)"
+      }
+    }
   ],
   "compliance_flags": [
-    { "framework": "GDPR|CCPA|HIPAA|PCI-DSS|SOC2|...", "status": "compliant|gap|not_applicable|unclear", "note": "string" }
+    {
+      "framework": "GDPR|CCPA|HIPAA|PCI-DSS|SOC2|...",
+      "status": "compliant|gap|not_applicable|unclear",
+      "note": "string",
+      "confidence": "high|medium|low",
+      "provenance": "same shape as risks[].provenance (may be null for 'not_applicable')"
+    }
   ],
   "recommendations": ["string"],
   "safety_score": "int 0-100 (server-computed from risks)",
-  "letter_grade": "A|B|C|D|F (server-derived from safety_score)"
+  "letter_grade": "A|B|C|D|F (server-derived from safety_score)",
+  "overall_confidence": "int 0-100 (server-computed: 50 × anchor_rate + 50 × avg_self_confidence)",
+  "confidence_level": "high (≥80) | medium (≥60) | low"
 }
 ```
 
@@ -138,6 +158,7 @@ Same response shape; request body:
 | 0.7.0   | 2026-07-16 | **Less is more:** retired the unbuilt React/Hono frontend (142 files, ~100 npm deps, Vite/tRPC/Drizzle toolchain) that never deployed. Repo is now one coherent product — the FastAPI contract-review API + static landing page. No cross-imports removed anything from the Python app (55 tests still green). Trimmed `.env.example` to API vars, streamlined `BLUEPRINT.md` to a single blueprint, and pointed Vercel at the static `site/` (zero build). |
 | 0.7.1   | 2026-07-17 | **Search-first UX:** landing page rebuilt as a Google-search-like fold — big centered wordmark, prompt input, 3 sample chips, minimal chrome. Cut 9 sections down to 1 stage + 1 result + collapsed "learn more". Added the **Svensk medborgarskap överklagan** sample (Migrationsverket appeal with adaptive verdict, MedbL 11§/12§ + FL 44§ citations, MIG 2019:20 case law). Added **role reveal chips** — Creators / Entrepreneurs / Builders / Consultants / Owners / Operators — each with the top 5 legal matters for that profile. Verified light + dark, 55 tests green. |
 | 0.7.2   | 2026-07-17 | **UX polish (E→Im pass):** autofocus prompt on load · `/` keyboard shortcut to jump focus (with subtle `kbd` hint in the input) · Escape resets stage · **illustrative-sample badge** on the result panel with a "Call the live API" link (so nobody mistakes the client-side demo for a real analysis of typed text). CLAUDE.md landing description synced. 55 tests green. |
+| 0.7.3   | 2026-07-23 | **Provenance + confidence — the anti-hallucination gate.** New `Provenance` schema on every `Risk` and `ComplianceFlag`: the model must attach a `text_excerpt` from the source justifying each finding. The server anchors it by exact substring match (same logic as `KeyClause`); any finding whose citation is not present verbatim is auto-downgraded to `low` confidence — **the model cannot fabricate a citation without the server catching it**. Deterministic `overall_confidence` (0–100) + `confidence_level` (high/medium/low) computed as `50 × anchor_rate + 50 × avg_self_confidence`. Landing demo shows the whole glass-box: cited excerpts inline per risk (green ✓ badge + blockquote), per-finding confidence badges, top-level confidence pill, raw JSON exposes `provenance` + `overall_confidence`. Prompt updated to make provenance mandatory. +17 tests (72 total). Answers the "risk of hallucination" feedback: the tool now *measures* trustworthiness at the source level. |
 
 ## Session lessons (evo-metaclaw)
 
@@ -149,3 +170,4 @@ Extracted patterns from the v0.5 → v0.7 arc, kept here so future sessions can 
 - **Adaptive verdict language > forced consistency** — the same score-ring UI serves both contract review ("Do not sign as-is") and appeal drafting ("Weak case — supplementary evidence essential") through a per-sample `verdictOverride`. Less code than a fork, more clarity than a shared verbose label.
 - **Ask when scopes diverge** — when the Vercel deploy could be fixed by three genuinely different paths (repo, dashboard, disable), AskUserQuestion cut the round-trip loop that had been failing. Don't guess at reversibility questions.
 - **Illustrative ≠ live** — the v0.7.2 badge (`Illustrative sample — this preview runs client-side`) came from noticing the demo *looked* like a real analysis of typed text. When a UI simulates real behavior, disclose it or make it real — halfway is misleading.
+- **Glass-box beats "trust me" for LLM outputs.** The v0.7.3 provenance gate answers "how do you prevent hallucination?" not by measuring hallucination probability, but by making it structurally impossible for an ungrounded claim to score well. Every finding must attach a verbatim excerpt; the server anchors it; unanchored → auto-`low`; `overall_confidence` drops. Same pattern as the safety-score / citation-offset design: the model proposes, the server *verifies at the source level*. Reusable across any LLM product where the risk of confabulation is the product risk.

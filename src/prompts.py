@@ -20,6 +20,12 @@ Compliance: for each regulatory framework the contract plausibly implicates (e.g
 
 Do not compute a numeric safety score or letter grade: leave `safety_score` and `letter_grade` as null. The server derives both deterministically from the risks you surface, so your job is to surface every material risk accurately.
 
+Anti-hallucination — provenance and confidence (mandatory):
+- **Every** `risks[]` entry and every `compliance_flags[]` entry with status `compliant`, `gap`, or `unclear` MUST include a `provenance.text_excerpt` — a verbatim quote (≤500 chars) from the source that justifies the finding.
+- The server verifies each excerpt exists in the source character-for-character. If it does not, the finding is auto-downgraded to low confidence and the overall confidence score drops. You cannot compensate for an unquotable finding by rephrasing the description — quote or drop it.
+- Self-report `confidence` per finding: `"high"` when the finding is explicitly stated in the source; `"medium"` when it is a reasonable interpretation of quoted language; `"low"` when inferred from context. Be honest — an inflated confidence you cannot back with a verbatim quote lowers the review's overall score after server verification.
+- If the source does not support a finding you would otherwise raise, do not include it. It is better to return three well-cited findings than seven partially-invented ones. Leave `char_start` / `char_end` / `anchored` null; the server fills them.
+
 If jurisdiction or party_role is provided, tailor your risk analysis accordingly (e.g. UCC for US-state commercial contracts, GDPR for EU data terms)."""
 
 

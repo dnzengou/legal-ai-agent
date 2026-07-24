@@ -385,7 +385,19 @@ main { flex: 1; display: flex; flex-direction: column; }
 
 .result-headline { flex: 1 1 20rem; text-align: left; }
 .verdict { font-size: 1.2rem; font-weight: 600; margin: 0 0 0.4rem; letter-spacing: -0.01em; }
-.verdict-sub { color: var(--fg-muted); margin: 0; font-size: 0.95rem; line-height: 1.55; }
+.verdict-sub { color: var(--fg-muted); margin: 0 0 0.6rem; font-size: 0.95rem; line-height: 1.55; }
+
+.confidence-pill {
+  display: inline-block;
+  margin: 0.25rem 0 0;
+  padding: 0.2rem 0.7rem;
+  border: 1px solid var(--fg-faint);
+  color: var(--fg-muted);
+  border-radius: var(--radius-pill);
+  font-size: 0.78rem;
+  font-family: var(--mono);
+  cursor: help;
+}
 
 .result-cols {
   display: grid;
@@ -433,7 +445,54 @@ main { flex: 1; display: flex; flex-direction: column; }
 .badge-medium .badge-sev { color: var(--warning); }
 .badge-low .badge-sev { color: var(--success); }
 .badge-cat { font-weight: 500; margin-left: 0.4rem; font-size: 0.9rem; }
+.badge-conf {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.05rem 0.35rem;
+  margin-left: 0.35rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+  color: var(--fg-muted);
+  font-family: var(--mono);
+}
+.badge-conf-high { color: var(--success); border-color: color-mix(in srgb, var(--success) 40%, var(--border)); }
+.badge-conf-medium { color: var(--warning); border-color: color-mix(in srgb, var(--warning) 40%, var(--border)); }
+.badge-conf-low { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 40%, var(--border)); }
 .badge-desc { display: block; color: var(--fg-muted); font-size: 0.88rem; margin-top: 0.35rem; line-height: 1.5; }
+
+.cite {
+  margin: 0.5rem 0 0;
+  padding: 0.5rem 0.75rem;
+  border-left: 2px solid var(--success);
+  background: color-mix(in srgb, var(--success) 6%, transparent);
+  font-size: 0.85rem;
+  color: var(--fg);
+  font-style: italic;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+.cite-mark {
+  font-style: normal;
+  font-weight: 600;
+  color: var(--success);
+  margin-right: 0.4rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+}
+.cite-missing {
+  display: inline-block;
+  margin-top: 0.5rem;
+  padding: 0.15rem 0.5rem;
+  border: 1px dashed var(--danger);
+  border-radius: var(--radius-sm);
+  color: var(--danger);
+  font-size: 0.78rem;
+  font-family: var(--mono);
+  cursor: help;
+}
+.chip-cite { color: var(--success); font-weight: 600; margin-left: 0.15rem; }
 
 .chip-item {
   display: inline-block;

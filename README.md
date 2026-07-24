@@ -8,6 +8,7 @@ Powered by Claude Opus 4.8 with adaptive thinking, structured outputs, and nativ
 
 **→ Live demo: [legal-ai-agent.netlify.app](https://legal-ai-agent.netlify.app)** — search-first landing with interactive samples (SaaS · NDA · Svensk medborgarskap överklagan).
 
+- [Why (and when) to use this vs. ChatGPT / Claude / Gemini / enterprise legal AI](./POSITIONING.md) — honest comparison
 - [Landing page source](./site/index.html)
 - [Roadmap](./BLUEPRINT.md)
 - [Go-to-market](./GTM.md)

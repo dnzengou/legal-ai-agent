@@ -9,24 +9,185 @@
 
   <link rel="canonical" href="https://legal-ai-agent.netlify.app/">
   <meta property="og:title" content="legal-ai-agent — first-pass legal analysis in seconds">
-  <meta property="og:description" content="Paste any legal document. Get clauses, risks, a safety score, and cited recommendations.">
+  <meta property="og:description" content="Paste any legal document. Get clauses, risks, a safety score, and cited recommendations with provenance-anchored citations.">
   <meta property="og:type" content="website">
+  <meta property="og:site_name" content="legal-ai-agent">
   <meta property="og:url" content="https://legal-ai-agent.netlify.app/">
-  <meta name="twitter:card" content="summary">
+  <meta property="og:image" content="https://legal-ai-agent.netlify.app/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="legal · ai · agent — first-pass legal analysis in seconds.">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="legal-ai-agent — first-pass legal analysis in seconds">
+  <meta name="twitter:description" content="Open-source contract review API. Verbatim citations, provenance-anchored, server-computed safety + confidence scores.">
+  <meta name="twitter:image" content="https://legal-ai-agent.netlify.app/og-image.png">
+  <meta name="twitter:image:alt" content="legal · ai · agent — first-pass legal analysis in seconds.">
 
+  <link rel="alternate" type="application/json" title="OpenAPI 3.1" href="/openapi.json">
+  <link rel="alternate" type="text/plain" title="LLM-friendly site summary" href="/llms.txt">
+  <link rel="alternate" type="text/plain" title="LLM-friendly expanded context" href="/llms-full.txt">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%234f9fff'/%3E%3Cpath d='M11 12h10M11 16h10M11 20h6' stroke='%230a0e14' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="styles.css">
 
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    "name": "legal-ai-agent",
-    "applicationCategory": "BusinessApplication",
-    "operatingSystem": "Cross-platform",
-    "url": "https://legal-ai-agent.netlify.app/",
-    "codeRepository": "https://github.com/dnzengou/legal-ai-agent",
-    "license": "https://github.com/dnzengou/legal-ai-agent/blob/main/LICENSE"
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://legal-ai-agent.netlify.app/#org",
+        "name": "legal-ai-agent",
+        "url": "https://legal-ai-agent.netlify.app/",
+        "logo": "https://legal-ai-agent.netlify.app/og-image.png",
+        "sameAs": [
+          "https://github.com/dnzengou/legal-ai-agent"
+        ]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://legal-ai-agent.netlify.app/#website",
+        "name": "legal-ai-agent",
+        "url": "https://legal-ai-agent.netlify.app/",
+        "description": "First-pass legal analysis in seconds — open-source contract review API with provenance-anchored citations.",
+        "inLanguage": "en",
+        "publisher": { "@id": "https://legal-ai-agent.netlify.app/#org" },
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": {
+            "@type": "EntryPoint",
+            "urlTemplate": "https://legal-ai-agent.netlify.app/?q={search_term_string}"
+          },
+          "query-input": "required name=search_term_string"
+        }
+      },
+      {
+        "@type": "SoftwareApplication",
+        "@id": "https://legal-ai-agent.netlify.app/#app",
+        "name": "legal-ai-agent",
+        "alternateName": "Legal AI Agent",
+        "description": "Open-source FastAPI service, powered by Claude Opus 4.8, that reviews contracts, appeals, and legal documents and returns extracted clauses, risks, compliance flags, recommendations, a server-computed 0-100 safety score with an A-F letter grade, and a glass-box 0-100 overall-confidence score. Every finding ships with a verbatim citation that the server anchors to source character-for-character, making hallucinated findings structurally impossible to score well.",
+        "applicationCategory": "BusinessApplication",
+        "applicationSubCategory": "LegalTech",
+        "operatingSystem": "Cross-platform (Docker, Linux, macOS, Windows via WSL)",
+        "url": "https://legal-ai-agent.netlify.app/",
+        "codeRepository": "https://github.com/dnzengou/legal-ai-agent",
+        "programmingLanguage": "Python",
+        "runtimePlatform": "Python 3.12",
+        "softwareRequirements": "Anthropic API key (BYO)",
+        "image": "https://legal-ai-agent.netlify.app/og-image.png",
+        "license": "https://spdx.org/licenses/MIT.html",
+        "softwareVersion": "0.7.4",
+        "releaseNotes": "https://github.com/dnzengou/legal-ai-agent/blob/main/BLUEPRINT.md#changelog",
+        "downloadUrl": "https://github.com/dnzengou/legal-ai-agent",
+        "installUrl": "https://github.com/dnzengou/legal-ai-agent#quickstart",
+        "author": { "@id": "https://legal-ai-agent.netlify.app/#org" },
+        "publisher": { "@id": "https://legal-ai-agent.netlify.app/#org" },
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD",
+          "availability": "https://schema.org/InStock"
+        },
+        "featureList": [
+          "Contract review from plain text or base64-encoded PDF",
+          "Extracted parties, effective date, term, and key clauses with character-offset citations",
+          "Risk flagging by severity (low / medium / high) with verbatim excerpts",
+          "Per-framework compliance flags (GDPR, CCPA, HIPAA, PCI-DSS, SOC 2)",
+          "Server-computed deterministic safety score (0-100) and A-F letter grade",
+          "Glass-box overall-confidence score with provenance-anchored citations",
+          "Auto-downgrade of findings whose citations do not match the source verbatim",
+          "Zero-dependency Python client (stdlib only)",
+          "Rate limiting, API key auth, security headers, X-Request-ID tracing",
+          "Multi-arch Docker image (ARM64 + AMD64) published to GHCR",
+          "Pre-wired for Fly.io deploy; runs on any container host"
+        ],
+        "isAccessibleForFree": true,
+        "citation": "https://github.com/dnzengou/legal-ai-agent/blob/main/CITATION.cff"
+      },
+      {
+        "@type": "FAQPage",
+        "@id": "https://legal-ai-agent.netlify.app/#faq-summary",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How does legal-ai-agent prevent hallucination?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Every risk and compliance flag must attach a verbatim text excerpt from the source document. The server performs exact-substring anchoring on each excerpt. A finding whose citation is not present character-for-character has its confidence forcibly downgraded to low, which drags down the overall_confidence score. The model proposes; the server verifies at the source level. Fabricated citations cannot score well because they cannot anchor."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Is legal-ai-agent free?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. MIT licensed. You bring your own Anthropic API key. The only cost is whatever Anthropic charges for Claude Opus 4.8 inference per call."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Does legal-ai-agent replace a lawyer?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No. It performs first-pass triage — identifying parties, term, key clauses, risks, and framework compliance. Judgment-heavy work like negotiation strategy, jurisdiction-specific case law research, and drafting counter-proposals still belongs with a licensed attorney in your jurisdiction."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What languages does legal-ai-agent support?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Anything Claude Opus 4.8 reads fluently — including English, Swedish, French, German, Spanish, Portuguese, Italian, Dutch, and more. The landing-page demo includes a Swedish naturalization-appeal (överklagan) sample to Migrationsverket."
+            }
+          }
+        ]
+      },
+      {
+        "@type": "HowTo",
+        "@id": "https://legal-ai-agent.netlify.app/#howto",
+        "name": "How to review a contract with legal-ai-agent",
+        "description": "Send a contract to the legal-ai-agent API and get back a structured review with clauses, risks, compliance flags, recommendations, a safety score, and a confidence score.",
+        "totalTime": "PT1M",
+        "estimatedCost": {
+          "@type": "MonetaryAmount",
+          "currency": "USD",
+          "value": "0.01"
+        },
+        "supply": [
+          { "@type": "HowToSupply", "name": "An Anthropic API key" },
+          { "@type": "HowToSupply", "name": "The contract text (or a base64-encoded PDF)" }
+        ],
+        "tool": [
+          { "@type": "HowToTool", "name": "curl, Python, or any HTTP client" }
+        ],
+        "step": [
+          {
+            "@type": "HowToStep",
+            "name": "Deploy or point at the API",
+            "text": "Run locally with 'uvicorn api.app:app --port 8000', pull 'ghcr.io/dnzengou/legal-ai-agent', or deploy to Fly.io with 'fly deploy'.",
+            "url": "https://github.com/dnzengou/legal-ai-agent#deploy"
+          },
+          {
+            "@type": "HowToStep",
+            "name": "POST the contract",
+            "text": "Send POST /review with JSON body {\"contract_text\": \"...\"} and an X-API-Key header (if API_KEYS is set).",
+            "url": "https://legal-ai-agent.netlify.app/openapi.json"
+          },
+          {
+            "@type": "HowToStep",
+            "name": "Read the structured response",
+            "text": "The response includes parties, key_clauses (with char_start/char_end citations), risks with provenance.text_excerpt, compliance_flags, recommendations, safety_score (0-100), letter_grade (A-F), overall_confidence (0-100), and confidence_level."
+          }
+        ]
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://legal-ai-agent.netlify.app/" },
+          { "@type": "ListItem", "position": 2, "name": "FAQ",  "item": "https://legal-ai-agent.netlify.app/faq.html" }
+        ]
+      }
+    ]
   }
   </script>
 </head>
@@ -36,6 +197,7 @@
   <header role="banner">
     <a class="brand" href="/" aria-label="legal-ai-agent home">legal-ai-agent</a>
     <nav aria-label="Primary">
+      <a href="/faq.html">FAQ</a>
       <a href="https://github.com/dnzengou/legal-ai-agent" rel="noopener">GitHub</a>
     </nav>
   </header>
@@ -149,14 +311,35 @@ curl -X POST https://api.legal-ai-agent.fly.dev/review \
   -H <span class="tok-string">"X-API-Key: $KEY"</span> \
   -H <span class="tok-string">"Content-Type: application/json"</span> \
   -d '{<span class="tok-key">"contract_text"</span>: <span class="tok-string">"…"</span>}'</code></pre>
-          <p>Full response shape (score, grade, risks, compliance, citations): see <a href="https://github.com/dnzengou/legal-ai-agent/blob/main/BLUEPRINT.md" rel="noopener">BLUEPRINT.md</a>. A zero-dependency Python client ships in <a href="https://github.com/dnzengou/legal-ai-agent/blob/main/examples/client.py" rel="noopener">examples/client.py</a>.</p>
+          <p>OpenAPI 3.1 spec: <a href="/openapi.json"><code>/openapi.json</code></a>. Full response shape in <a href="https://github.com/dnzengou/legal-ai-agent/blob/main/BLUEPRINT.md" rel="noopener">BLUEPRINT.md</a>. Zero-dependency Python client in <a href="https://github.com/dnzengou/legal-ai-agent/blob/main/examples/client.py" rel="noopener">examples/client.py</a>. More recipes — bookmarklet, GitHub Action, Postman — in <a href="https://github.com/dnzengou/legal-ai-agent/blob/main/INTEGRATE.md" rel="noopener">INTEGRATE.md</a>.</p>
         </div>
       </details>
+    </section>
+
+    <section class="faq-snippet" aria-labelledby="faq-snippet-h">
+      <h2 id="faq-snippet-h" class="faq-snippet-h">Frequently asked</h2>
+      <details>
+        <summary>How does it prevent hallucination?</summary>
+        <p>Every risk and compliance flag must attach a verbatim quote from your source. The server anchors each quote by exact substring match. Unanchored quotes force the finding to <code>low</code> confidence and drag down the overall score. A fabricated citation cannot score well because it cannot anchor.</p>
+      </details>
+      <details>
+        <summary>Is my document stored anywhere?</summary>
+        <p>No. Contracts are processed in memory and discarded after the response. No database, no persistence.</p>
+      </details>
+      <details>
+        <summary>Does it replace a lawyer?</summary>
+        <p>No. First-pass triage only. Judgment, negotiation strategy, and jurisdiction-specific case law still belong with a licensed attorney.</p>
+      </details>
+      <details>
+        <summary>What languages does it support?</summary>
+        <p>Anything Claude Opus 4.8 reads fluently — English, Swedish, French, German, Spanish, Portuguese, Italian, Dutch, and more.</p>
+      </details>
+      <p class="faq-more"><a href="/faq.html">All questions &rarr;</a></p>
     </section>
   </main>
 
   <footer role="contentinfo">
-    <p>Powered by Claude Opus 4.8 · Open source · <a href="https://github.com/dnzengou/legal-ai-agent/blob/main/LICENSE" rel="noopener">MIT</a> · <a href="https://github.com/dnzengou/legal-ai-agent" rel="noopener">GitHub</a></p>
+    <p>Powered by Claude Opus 4.8 · Open source · <a href="https://github.com/dnzengou/legal-ai-agent/blob/main/LICENSE" rel="noopener">MIT</a> · <a href="https://github.com/dnzengou/legal-ai-agent" rel="noopener">GitHub</a> · <a href="/faq.html">FAQ</a> · <a href="/openapi.json">OpenAPI</a> · <a href="/llms.txt">llms.txt</a></p>
   </footer>
 
   <script>

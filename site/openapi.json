@@ -1,0 +1,661 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "legal-ai-agent",
+    "description": "Contract review API powered by Claude \u2014 clauses, risk flags, safety score, and compliance.",
+    "version": "0.7.4"
+  },
+  "paths": {
+    "/": {
+      "get": {
+        "summary": "Root",
+        "operationId": "root__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Root  Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Health",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Health Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/review": {
+      "post": {
+        "summary": "Review",
+        "operationId": "review_review_post",
+        "parameters": [
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractReview"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/review-pdf": {
+      "post": {
+        "summary": "Review Pdf",
+        "operationId": "review_pdf_review_pdf_post",
+        "parameters": [
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewPdfRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractReview"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ComplianceFlag": {
+        "properties": {
+          "framework": {
+            "type": "string",
+            "title": "Framework",
+            "description": "Regulatory framework, e.g. 'GDPR', 'CCPA', 'HIPAA', 'PCI-DSS', 'SOC2'"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "compliant",
+              "gap",
+              "not_applicable",
+              "unclear"
+            ],
+            "title": "Status",
+            "description": "Whether the contract satisfies, gaps, or does not implicate this framework"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note",
+            "description": "What was found (or missing) and why it matters for this framework"
+          },
+          "provenance": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Provenance"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Verbatim excerpt from source that supports the framework assessment. Optional for 'not_applicable' status."
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "high",
+                  "medium",
+                  "low"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence",
+            "description": "Model self-report; server downgrades to 'low' if provenance did not anchor."
+          }
+        },
+        "type": "object",
+        "required": [
+          "framework",
+          "status",
+          "note"
+        ],
+        "title": "ComplianceFlag"
+      },
+      "ContractReview": {
+        "properties": {
+          "summary": {
+            "type": "string",
+            "title": "Summary",
+            "description": "2-3 sentence executive summary of the contract"
+          },
+          "parties": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Parties",
+            "description": "Legal names of all parties"
+          },
+          "effective_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Effective Date",
+            "description": "ISO date or null if not stated"
+          },
+          "term": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Term",
+            "description": "Duration / term description or null"
+          },
+          "key_clauses": {
+            "items": {
+              "$ref": "#/components/schemas/KeyClause"
+            },
+            "type": "array",
+            "title": "Key Clauses"
+          },
+          "risks": {
+            "items": {
+              "$ref": "#/components/schemas/Risk"
+            },
+            "type": "array",
+            "title": "Risks"
+          },
+          "compliance_flags": {
+            "items": {
+              "$ref": "#/components/schemas/ComplianceFlag"
+            },
+            "type": "array",
+            "title": "Compliance Flags",
+            "description": "Regulatory compliance assessment across frameworks implicated by the contract"
+          },
+          "recommendations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Recommendations",
+            "description": "Actionable recommendations for the reviewing party"
+          },
+          "safety_score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Safety Score",
+            "description": "Server-filled: 0-100 safety score computed from risks (null in model output; the server sets it)"
+          },
+          "letter_grade": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Letter Grade",
+            "description": "Server-filled: A-F grade derived from safety_score (null in model output; the server sets it)"
+          },
+          "overall_confidence": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Overall Confidence",
+            "description": "Server-filled: 0-100 confidence score derived from per-finding anchoring + self-reported confidence. High = every finding is verbatim-cited to source."
+          },
+          "confidence_level": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "high",
+                  "medium",
+                  "low"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence Level",
+            "description": "Server-filled: bucketed from overall_confidence (>=80 high, >=60 medium, else low)."
+          }
+        },
+        "type": "object",
+        "required": [
+          "summary",
+          "parties",
+          "key_clauses",
+          "risks",
+          "recommendations"
+        ],
+        "title": "ContractReview"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "KeyClause": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "title": "Type",
+            "description": "Clause type, e.g. 'termination', 'indemnification', 'limitation_of_liability'"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary",
+            "description": "Plain-English summary of the clause"
+          },
+          "text_excerpt": {
+            "type": "string",
+            "title": "Text Excerpt",
+            "description": "Verbatim excerpt from the contract, max 500 chars"
+          },
+          "char_start": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Char Start",
+            "description": "Server-filled: start offset of text_excerpt in source contract (null for PDFs or non-verbatim quotes)"
+          },
+          "char_end": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Char End",
+            "description": "Server-filled: end offset of text_excerpt in source contract"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "summary",
+          "text_excerpt"
+        ],
+        "title": "KeyClause"
+      },
+      "Provenance": {
+        "properties": {
+          "text_excerpt": {
+            "type": "string",
+            "maxLength": 500,
+            "title": "Text Excerpt",
+            "description": "Verbatim excerpt from the source that justifies this finding. Max 500 chars. Must be present character-for-character in the source or the finding is downgraded to low confidence."
+          },
+          "char_start": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Char Start",
+            "description": "Server-filled: start offset in source; null if not anchored or if PDF input."
+          },
+          "char_end": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Char End",
+            "description": "Server-filled: end offset in source; null if not anchored or if PDF input."
+          },
+          "anchored": {
+            "type": "boolean",
+            "title": "Anchored",
+            "description": "Server-filled: True if text_excerpt was found verbatim in the source.",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "text_excerpt"
+        ],
+        "title": "Provenance",
+        "description": "A verbatim excerpt from the source that justifies a finding.\n\nAnti-hallucination invariant: the server anchors `text_excerpt` back to the\nsource by exact substring match. If the excerpt is not present verbatim,\n`anchored` is False and the server treats the finding as low-confidence \u2014\nthe model cannot invent a citation without being caught."
+      },
+      "ReviewPdfRequest": {
+        "properties": {
+          "pdf_base64": {
+            "type": "string",
+            "minLength": 100,
+            "title": "Pdf Base64",
+            "description": "Base64-encoded PDF, max 32MB decoded"
+          },
+          "jurisdiction": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Jurisdiction"
+          },
+          "party_role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Party Role"
+          }
+        },
+        "type": "object",
+        "required": [
+          "pdf_base64"
+        ],
+        "title": "ReviewPdfRequest"
+      },
+      "ReviewRequest": {
+        "properties": {
+          "contract_text": {
+            "type": "string",
+            "maxLength": 500000,
+            "minLength": 50,
+            "title": "Contract Text"
+          },
+          "jurisdiction": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Jurisdiction"
+          },
+          "party_role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Party Role",
+            "description": "Which party the reviewer represents"
+          }
+        },
+        "type": "object",
+        "required": [
+          "contract_text"
+        ],
+        "title": "ReviewRequest"
+      },
+      "Risk": {
+        "properties": {
+          "severity": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ],
+            "title": "Severity"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category",
+            "description": "Risk category, e.g. 'unlimited_liability', 'auto_renewal', 'ip_assignment'"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "description": "What the risk is and why it matters"
+          },
+          "clause_ref": {
+            "type": "string",
+            "title": "Clause Ref",
+            "description": "Reference to the source clause (section number or heading)"
+          },
+          "provenance": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Provenance"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Required for anti-hallucination: verbatim excerpt from source that justifies this risk."
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "high",
+                  "medium",
+                  "low"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence",
+            "description": "Model self-report: 'high' if explicitly stated in source, 'medium' if reasonable interpretation, 'low' if inferred. The server downgrades to 'low' if provenance did not anchor."
+          }
+        },
+        "type": "object",
+        "required": [
+          "severity",
+          "category",
+          "description",
+          "clause_ref"
+        ],
+        "title": "Risk"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.legal-ai-agent.fly.dev",
+      "description": "Reference deployment (BYO key)"
+    },
+    {
+      "url": "http://localhost:8000",
+      "description": "Local development"
+    }
+  ],
+  "externalDocs": {
+    "description": "Project docs on GitHub",
+    "url": "https://github.com/dnzengou/legal-ai-agent"
+  }
+}

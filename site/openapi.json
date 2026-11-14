@@ -3,7 +3,7 @@
   "info": {
     "title": "legal-ai-agent",
     "description": "Contract review API powered by Claude \u2014 clauses, risk flags, safety score, and compliance.",
-    "version": "0.7.4"
+    "version": "0.7.5"
   },
   "paths": {
     "/": {

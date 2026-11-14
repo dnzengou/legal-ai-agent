@@ -1,0 +1,99 @@
+# robots.txt — explicit allow-list for AI crawlers
+# Replace {{SITE_URL}} with your canonical origin before shipping.
+
+User-agent: *
+Allow: /
+
+# OpenAI
+User-agent: GPTBot
+Allow: /
+User-agent: OAI-SearchBot
+Allow: /
+User-agent: ChatGPT-User
+Allow: /
+
+# Anthropic
+User-agent: ClaudeBot
+Allow: /
+User-agent: Claude-Web
+Allow: /
+User-agent: Claude-SearchBot
+Allow: /
+User-agent: Claude-User
+Allow: /
+User-agent: anthropic-ai
+Allow: /
+
+# Perplexity
+User-agent: PerplexityBot
+Allow: /
+User-agent: Perplexity-User
+Allow: /
+
+# Google
+User-agent: Googlebot
+Allow: /
+User-agent: Google-Extended
+Allow: /
+User-agent: GoogleOther
+Allow: /
+
+# Microsoft
+User-agent: Bingbot
+Allow: /
+
+# Apple
+User-agent: Applebot
+Allow: /
+User-agent: Applebot-Extended
+Allow: /
+
+# Amazon
+User-agent: Amazonbot
+Allow: /
+
+# Common Crawl (feeds many LLM training sets)
+User-agent: CCBot
+Allow: /
+
+# Cohere
+User-agent: cohere-ai
+Allow: /
+User-agent: cohere-training-data-crawler
+Allow: /
+
+# DuckDuckGo Assist
+User-agent: DuckAssistBot
+Allow: /
+
+# Mistral
+User-agent: MistralAI-User
+Allow: /
+
+# DeepSeek
+User-agent: DeepSeekBot
+Allow: /
+
+# Meta
+User-agent: Meta-ExternalAgent
+Allow: /
+User-agent: FacebookExternalHit
+Allow: /
+
+# ByteDance
+User-agent: Bytespider
+Allow: /
+
+# Diffbot (knowledge-graph crawler)
+User-agent: Diffbot
+Allow: /
+
+# Kagi
+User-agent: Kagibot
+Allow: /
+
+# You.com
+User-agent: YouBot
+Allow: /
+
+Sitemap: {{SITE_URL}}/sitemap.xml

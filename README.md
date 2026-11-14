@@ -15,14 +15,20 @@ Powered by Claude Opus 4.8 with adaptive thinking, structured outputs, and nativ
 
 **→ Live demo: [legal-ai-agent.netlify.app](https://legal-ai-agent.netlify.app)** — search-first landing with interactive samples (SaaS · NDA · Svensk medborgarskap överklagan).
 
+- [**Onboarding — first review in 60 seconds**](./ONBOARDING.md) ← start here
 - [Why (and when) to use this vs. ChatGPT / Claude / Gemini / enterprise legal AI](./POSITIONING.md) — honest comparison
 - [Integrate it — bookmarklet, GitHub Action, Slack, Zapier, MCP, Postman](./INTEGRATE.md)
 - [FAQ](https://legal-ai-agent.netlify.app/faq.html)
 - [Machine-readable API (OpenAPI 3.1)](https://legal-ai-agent.netlify.app/openapi.json)
 - [LLM-friendly site summary (`llms.txt`)](https://legal-ai-agent.netlify.app/llms.txt)
-- [Landing page source](./site/index.html)
-- [Roadmap](./BLUEPRINT.md) · [Go-to-market](./GTM.md)
+- [GEO skill — make any project agent-discoverable](./.claude/skills/geo-ai-seo/) · standalone, drop-in
+- [Changelog](./CHANGELOG.md) · [Roadmap](./BLUEPRINT.md) · [Go-to-market](./GTM.md)
 - [Security policy](./SECURITY.md) · [Contributing](./CONTRIBUTING.md) · [Citation](./CITATION.cff)
+
+### One-click deploys
+
+[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/dnzengou/legal-ai-agent)
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/dnzengou/legal-ai-agent)
 
 ## Quickstart
 

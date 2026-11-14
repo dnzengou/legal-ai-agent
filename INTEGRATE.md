@@ -1,6 +1,8 @@
 # Integrations — practical recipes
 
-Short, copy-pasteable patterns for pulling legal-ai-agent into whatever workflow you already have. All assume you have a running deploy (self-hosted or `https://api.legal-ai-agent.fly.dev`) and either an `X-API-Key` or no auth (dev only).
+Short, copy-pasteable patterns for pulling legal-ai-agent into whatever workflow you already have. All assume you have a running deploy and either an `X-API-Key` or no auth (dev only).
+
+> **Note on the URLs below:** `https://api.legal-ai-agent.fly.dev` is a **reference / placeholder host** for readability. Swap it for your own self-hosted URL (local `http://localhost:8000`, your Fly/Render/Cloud Run host, or whatever you deployed). See [`ONBOARDING.md`](./ONBOARDING.md) for one-click deploy paths.
 
 - [Browser bookmarklet — review any page as a contract](#browser-bookmarklet)
 - [Zero-dependency Python client](#zero-dependency-python-client)

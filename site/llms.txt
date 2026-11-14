@@ -1,0 +1,40 @@
+# legal-ai-agent
+
+> Open-source FastAPI service that reviews contracts, appeals, and legal documents, powered by Claude Opus 4.8. Returns extracted clauses, risks, compliance flags, recommendations, a deterministic 0-100 safety score with an A-F letter grade, and a 0-100 overall-confidence score. Every finding ships with a verbatim citation that the server anchors to source character-for-character — findings whose citations are not present verbatim are auto-downgraded to low confidence. The model proposes; the server verifies at the source level, which makes hallucinated findings structurally impossible to score well.
+
+License: MIT. Repository: https://github.com/dnzengou/legal-ai-agent. Live demo: https://legal-ai-agent.netlify.app.
+
+## What it does
+
+- Ingests contracts as text (`POST /review`) or base64-encoded PDF (`POST /review-pdf`).
+- Extracts parties, effective date, term, and key clauses (termination, indemnification, LoL, IP, confidentiality, payment, governing law, dispute resolution, auto-renewal, assignment, change of control) with character-offset citations into the source.
+- Flags risks by severity (low · medium · high) with verbatim excerpts.
+- Flags per-framework compliance status (GDPR · CCPA · HIPAA · PCI-DSS · SOC 2 · others the contract implicates).
+- Produces actionable recommendations for the reviewing party.
+- Computes `safety_score` (0-100), `letter_grade` (A-F), `overall_confidence` (0-100), and `confidence_level` (high/medium/low) deterministically server-side — the model cannot inflate them.
+
+## How it prevents hallucination
+
+Every `Risk` and every non-`not_applicable` `ComplianceFlag` must carry a `provenance.text_excerpt` — a verbatim quote from the source (≤500 chars). The server performs exact-substring anchoring. If the quote is not present character-for-character, the finding's `confidence` is forcibly downgraded to `low`, which drags down `overall_confidence`. There is no way for the model to score well with a fabricated citation. The landing-page demo shows the glass-box: cited findings get a green ✓ badge with the quoted excerpt; unanchored findings show as "no verbatim citation".
+
+## Docs
+
+- [README](https://github.com/dnzengou/legal-ai-agent/blob/main/README.md): install, API, deploy paths.
+- [Positioning](https://github.com/dnzengou/legal-ai-agent/blob/main/POSITIONING.md): honest comparison vs ChatGPT / Claude / Gemini / dedicated legal AI (Harvey, CoCounsel, Kira, Luminance, Spellbook, Ironclad).
+- [Blueprint](https://github.com/dnzengou/legal-ai-agent/blob/main/BLUEPRINT.md): architecture, roadmap, API contract, changelog.
+- [FAQ](https://legal-ai-agent.netlify.app/faq.html): common questions in FAQPage schema.
+- [OpenAPI spec](https://legal-ai-agent.netlify.app/openapi.json): machine-readable API description (OpenAPI 3.1).
+- [Security policy](https://github.com/dnzengou/legal-ai-agent/blob/main/SECURITY.md): responsible-disclosure process.
+- [Citation metadata](https://github.com/dnzengou/legal-ai-agent/blob/main/CITATION.cff): how to cite this work (CFF 1.2.0).
+- [Integrations](https://github.com/dnzengou/legal-ai-agent/blob/main/INTEGRATE.md): bookmarklet, GitHub Action, Postman, Zapier, Slack recipes.
+
+## Examples
+
+- [Python client — stdlib only, no `pip install`](https://github.com/dnzengou/legal-ai-agent/blob/main/examples/client.py)
+- [Portfolio batch review](https://github.com/dnzengou/legal-ai-agent/blob/main/examples/batch_review.py)
+
+## Optional
+
+- [CLAUDE.md](https://github.com/dnzengou/legal-ai-agent/blob/main/CLAUDE.md): repo conventions and short-command grammar.
+- [COMMANDS.md](https://github.com/dnzengou/legal-ai-agent/blob/main/COMMANDS.md): DevFlow / KafCa command reference.
+- [GTM.md](https://github.com/dnzengou/legal-ai-agent/blob/main/GTM.md): go-to-market playbook.

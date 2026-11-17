@@ -1,5 +1,12 @@
 # legal-ai-agent
 
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
+[![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/)
+[![Tests](https://img.shields.io/badge/tests-72%20passing-brightgreen.svg)](./tests)
+[![OpenAPI 3.1](https://img.shields.io/badge/openapi-3.1-85EA2D.svg)](https://legal-ai-agent.netlify.app/openapi.json)
+[![Docker — GHCR](https://img.shields.io/badge/docker-ghcr.io-2496ED.svg)](https://github.com/dnzengou/legal-ai-agent/pkgs/container/legal-ai-agent)
+[![Netlify Status](https://img.shields.io/badge/netlify-live-00C7B7.svg)](https://legal-ai-agent.netlify.app)
+
 Open-source contract review API. Send a contract (text or PDF), get back parties, key clauses with character-offset citations, risk flags, a 0–100 safety score with an A–F grade, per-framework compliance flags, and recommendations — validated against a strict JSON schema.
 
 **Glass-box, not black-box.** Every risk and compliance flag ships with a verbatim `provenance.text_excerpt` from the source. The server anchors each excerpt back to the input by character-for-character match; any finding whose citation is not present verbatim is auto-downgraded to low confidence. A deterministic `overall_confidence` score (0–100) tells you how well-grounded the whole review is — **the model literally cannot fabricate a citation without the server catching it.**
@@ -8,10 +15,20 @@ Powered by Claude Opus 4.8 with adaptive thinking, structured outputs, and nativ
 
 **→ Live demo: [legal-ai-agent.netlify.app](https://legal-ai-agent.netlify.app)** — search-first landing with interactive samples (SaaS · NDA · Svensk medborgarskap överklagan).
 
+- [**Onboarding — first review in 60 seconds**](./ONBOARDING.md) ← start here
 - [Why (and when) to use this vs. ChatGPT / Claude / Gemini / enterprise legal AI](./POSITIONING.md) — honest comparison
-- [Landing page source](./site/index.html)
-- [Roadmap](./BLUEPRINT.md)
-- [Go-to-market](./GTM.md)
+- [Integrate it — bookmarklet, GitHub Action, Slack, Zapier, MCP, Postman](./INTEGRATE.md)
+- [FAQ](https://legal-ai-agent.netlify.app/faq.html)
+- [Machine-readable API (OpenAPI 3.1)](https://legal-ai-agent.netlify.app/openapi.json)
+- [LLM-friendly site summary (`llms.txt`)](https://legal-ai-agent.netlify.app/llms.txt)
+- [GEO skill — make any project agent-discoverable](./.claude/skills/geo-ai-seo/) · standalone, drop-in
+- [Changelog](./CHANGELOG.md) · [Roadmap](./BLUEPRINT.md) · [Go-to-market](./GTM.md)
+- [Security policy](./SECURITY.md) · [Contributing](./CONTRIBUTING.md) · [Citation](./CITATION.cff)
+
+### One-click deploys
+
+[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/dnzengou/legal-ai-agent)
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/dnzengou/legal-ai-agent)
 
 ## Quickstart
 

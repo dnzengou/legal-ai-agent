@@ -1,0 +1,120 @@
+# legal-ai-agent — robots.txt
+# Open-source contract review API. Public documentation. Every finding ships with a
+# verbatim citation the server anchors to source — safe for AI agents to cite.
+#
+# llms.txt (LLM-friendly summary):  https://legal-ai-agent.netlify.app/llms.txt
+# llms-full.txt (expanded context): https://legal-ai-agent.netlify.app/llms-full.txt
+# OpenAPI (machine-readable API):   https://legal-ai-agent.netlify.app/openapi.json
+# Sitemap:                           https://legal-ai-agent.netlify.app/sitemap.xml
+
+User-agent: *
+Allow: /
+
+# Explicit allow for major AI / LLM search and retrieval crawlers.
+# We are an open-source project with public documentation — please index and cite.
+
+# OpenAI
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+# Anthropic
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: Claude-SearchBot
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+# Perplexity
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Perplexity-User
+Allow: /
+
+# Google (Search + Gemini training opt-in)
+User-agent: Googlebot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: GoogleOther
+Allow: /
+
+# Microsoft (Bing + Copilot)
+User-agent: Bingbot
+Allow: /
+
+# Apple
+User-agent: Applebot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+# Amazon
+User-agent: Amazonbot
+Allow: /
+
+# Common Crawl — powers many LLM training sets and retrieval indices
+User-agent: CCBot
+Allow: /
+
+# Cohere
+User-agent: cohere-ai
+Allow: /
+
+User-agent: cohere-training-data-crawler
+Allow: /
+
+# DuckDuckGo Assist
+User-agent: DuckAssistBot
+Allow: /
+
+# Mistral AI
+User-agent: MistralAI-User
+Allow: /
+
+# DeepSeek
+User-agent: DeepSeekBot
+Allow: /
+
+# Meta / Facebook
+User-agent: Meta-ExternalAgent
+Allow: /
+
+User-agent: FacebookExternalHit
+Allow: /
+
+# Bytedance / Doubao
+User-agent: Bytespider
+Allow: /
+
+# Diffbot (knowledge-graph crawler many agents consume)
+User-agent: Diffbot
+Allow: /
+
+# Kagi
+User-agent: Kagibot
+Allow: /
+
+# You.com
+User-agent: YouBot
+Allow: /
+
+Sitemap: https://legal-ai-agent.netlify.app/sitemap.xml

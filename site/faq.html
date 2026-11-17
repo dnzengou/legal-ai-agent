@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark light">
+  <title>FAQ — legal-ai-agent</title>
+  <meta name="description" content="Common questions about legal-ai-agent: how it prevents hallucination, what it costs, whether it replaces a lawyer, what languages it supports, how to self-host.">
+
+  <link rel="canonical" href="https://legal-ai-agent.netlify.app/faq.html">
+  <meta property="og:title" content="FAQ — legal-ai-agent">
+  <meta property="og:description" content="Common questions about legal-ai-agent: how it prevents hallucination, what it costs, and who it's for.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://legal-ai-agent.netlify.app/faq.html">
+  <meta property="og:image" content="https://legal-ai-agent.netlify.app/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="legal · ai · agent — first-pass legal analysis in seconds.">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://legal-ai-agent.netlify.app/og-image.png">
+
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%234f9fff'/%3E%3Cpath d='M11 12h10M11 16h10M11 20h6' stroke='%230a0e14' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What is legal-ai-agent?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "legal-ai-agent is an open-source FastAPI service that reviews contracts, appeals, and legal documents, powered by Claude Opus 4.8. It returns extracted clauses, risks, compliance flags, recommendations, a 0-100 safety score, an A-F letter grade, and a glass-box 0-100 confidence score where every finding ships with a verbatim citation from the source."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How does it prevent hallucination?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Every risk and compliance flag must attach a verbatim text excerpt from the source document (up to 500 characters). The server performs exact-substring anchoring on each excerpt. A finding whose citation is not present character-for-character has its confidence forcibly downgraded to low, which drags down the overall confidence score. The model proposes; the server verifies at the source level. Fabricated citations cannot score well because they cannot anchor."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is it free?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. legal-ai-agent is MIT licensed. You bring your own Anthropic API key. The only cost is whatever Anthropic charges for Claude Opus 4.8 inference per call, which scales with document length and the model's adaptive-thinking budget."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does it replace a lawyer?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No. legal-ai-agent performs first-pass triage — identifying parties, term, key clauses, risks, and framework compliance. Judgment-heavy work like negotiation strategy, jurisdiction-specific case law research, and drafting counter-proposals still belongs with a licensed attorney in your jurisdiction. Every response ships with a disclaimer to that effect."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is my document stored anywhere?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No. Contracts are processed in memory and discarded after the response. There is no database and no persistence layer in v0. If you self-host behind your own firewall, nothing leaves your infrastructure except the call to Anthropic's API."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What languages does it support?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Anything Claude Opus 4.8 reads fluently — including English, Swedish, French, German, Spanish, Portuguese, Italian, Dutch, and more. The landing page demo includes an Swedish (svenska) naturalization appeal sample ('överklagan') to Migrationsverket."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What models does it use?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Claude Opus 4.8 (anthropic/claude-opus-4-8) with adaptive thinking enabled and output_config.effort set to high. Structured outputs are enforced via the Anthropic SDK's messages.parse() method, which validates every response against a strict JSON schema."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How is the safety score computed?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Server-side, deterministically. Start at 100. For each risk the model flags, deduct 20 points if high severity, 8 if medium, 3 if low. Clamp to [0, 100]. Letter grade: A if score >= 90, B >= 80, C >= 70, D >= 60, else F. The model is instructed to leave these fields null; it cannot inflate them."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How is the confidence score computed?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Server-side, deterministically, as 50 x anchor_rate + 50 x avg_self_confidence, rounded to the nearest integer. Anchor rate is the fraction of findings whose verbatim citation is found in the source. Average self-confidence weights each finding at 1.0 for high, 0.6 for medium, 0.3 for low — unanchored findings are forcibly weighted at low (0.3). Buckets: high >= 80, medium >= 60, else low."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I self-host?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. A multi-arch Docker image is published to ghcr.io/dnzengou/legal-ai-agent on every push to main. It runs on any container host — Fly.io (pre-wired via fly.toml), Render, Railway, ECS, Cloud Run, Kubernetes, or a Raspberry Pi. Non-root user, HEALTHCHECK on /health. The Dockerfile targets both ARM64 and AMD64."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How is it different from using ChatGPT or Claude directly?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Three practical differences. First, every finding attaches a verbatim quote anchored to the source — ChatGPT and Claude cannot verify their own citations against your input. Second, the safety score and confidence score are deterministic and server-computed, so they are testable offline and immune to model drift. Third, it is a single-purpose API with a strict JSON schema — not a chat — so you can wire it into pipelines without parsing prose. For a deeper honest comparison with Harvey, CoCounsel, Kira, Luminance, Spellbook, and Ironclad, see POSITIONING.md in the repository."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How do I call the API?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "POST /review with JSON body {\"contract_text\": \"...\", \"jurisdiction\": \"optional\", \"party_role\": \"optional\"} and an X-API-Key header. For PDF, POST /review-pdf with {\"pdf_base64\": \"...\"}. The full OpenAPI 3.1 spec is published at /openapi.json. A zero-dependency Python client ships in examples/client.py."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is there a rate limit?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes — per-IP token-bucket limiting on /review and /review-pdf. Defaults: 30 requests per minute sustained, 60 burst. Tune via RATE_LIMIT_PER_MIN and RATE_LIMIT_BURST environment variables. /health and / are not rate-limited."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How do I cite legal-ai-agent in research?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Use the CITATION.cff file at the repository root — it follows Citation File Format 1.2.0 and is compatible with Zotero, Mendeley, GitHub's citation widget, and Zenodo. The file lists the project title, authors, repository, and MIT license."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Who is it for?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Creators (musicians, artists, writers, filmmakers) reviewing licensing and commissioning. Entrepreneurs (founders) reviewing term sheets, SAFEs, and customer MSAs. Builders (engineers) reviewing terms of service, DPAs, and API contracts. Consultants reviewing SOWs. SMB owners reviewing leases and employment agreements. Operators (GMs, procurement) reviewing vendor onboarding and SLAs. Also: individuals drafting administrative appeals, including naturalization appeals ('överklagan') to Swedish Migrationsverket."
+        }
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to main content</a>
+
+  <header role="banner">
+    <a class="brand" href="/" aria-label="legal-ai-agent home">legal-ai-agent</a>
+    <nav aria-label="Primary">
+      <a href="/">Home</a>
+      <a href="https://github.com/dnzengou/legal-ai-agent" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+
+  <main id="main" class="faq-main">
+    <section class="faq-head">
+      <h1>Frequently asked questions</h1>
+      <p class="tagline">Short answers to the questions people actually ask before using <a href="/">legal-ai-agent</a>. Every claim here maps to code or docs in the <a href="https://github.com/dnzengou/legal-ai-agent" rel="noopener">repository</a>.</p>
+    </section>
+
+    <section class="faq-body">
+      <details open>
+        <summary>What is legal-ai-agent?</summary>
+        <p>An open-source FastAPI service that reviews contracts, appeals, and legal documents, powered by Claude Opus 4.8. It returns extracted clauses, risks, compliance flags, recommendations, a 0–100 safety score, an A–F letter grade, and a glass-box 0–100 confidence score where every finding ships with a verbatim citation from the source.</p>
+      </details>
+
+      <details>
+        <summary>How does it prevent hallucination?</summary>
+        <p>Every risk and compliance flag must attach a verbatim text excerpt from the source document (up to 500 characters). The server performs exact-substring anchoring on each excerpt. A finding whose citation is not present character-for-character has its <code>confidence</code> forcibly downgraded to <code>low</code>, which drags down the <code>overall_confidence</code> score. The model proposes; the server verifies at the source level. Fabricated citations cannot score well because they cannot anchor. See <a href="https://github.com/dnzengou/legal-ai-agent/blob/main/src/agent.py" rel="noopener"><code>src/agent.py</code> &rarr; <code>_anchor_clauses()</code></a>.</p>
+      </details>
+
+      <details>
+        <summary>Is it free?</summary>
+        <p>Yes. MIT licensed. You bring your own Anthropic API key. The only cost is whatever Anthropic charges for Claude Opus 4.8 inference per call, which scales with document length and the model's adaptive-thinking budget.</p>
+      </details>
+
+      <details>
+        <summary>Does it replace a lawyer?</summary>
+        <p>No. legal-ai-agent performs first-pass triage — identifying parties, term, key clauses, risks, and framework compliance. Judgment-heavy work like negotiation strategy, jurisdiction-specific case law research, and drafting counter-proposals still belongs with a licensed attorney. Every response ships with a disclaimer to that effect.</p>
+      </details>
+
+      <details>
+        <summary>Is my document stored anywhere?</summary>
+        <p>No. Contracts are processed in memory and discarded after the response. There is no database and no persistence layer in v0. If you self-host behind your own firewall, nothing leaves your infrastructure except the call to Anthropic's API.</p>
+      </details>
+
+      <details>
+        <summary>What languages does it support?</summary>
+        <p>Anything Claude Opus 4.8 reads fluently — including English, Swedish, French, German, Spanish, Portuguese, Italian, Dutch, and more. The landing-page demo includes a Swedish naturalization-appeal sample (<em>svensk medborgarskap överklagan</em>) to Migrationsverket.</p>
+      </details>
+
+      <details>
+        <summary>What models does it use?</summary>
+        <p>Claude Opus 4.8 (<code>anthropic/claude-opus-4-8</code>) with adaptive thinking enabled and <code>output_config.effort</code> set to <code>high</code>. Structured outputs are enforced via the Anthropic SDK's <code>messages.parse()</code> method, which validates every response against a strict JSON schema.</p>
+      </details>
+
+      <details>
+        <summary>How is the safety score computed?</summary>
+        <p>Server-side, deterministically. Start at 100. For each risk the model flags, deduct 20 points if high severity, 8 if medium, 3 if low. Clamp to <code>[0, 100]</code>. Letter grade: A if ≥ 90, B if ≥ 80, C if ≥ 70, D if ≥ 60, else F. The model is instructed to leave these fields null; it cannot inflate them. See <a href="https://github.com/dnzengou/legal-ai-agent/blob/main/src/scoring.py" rel="noopener"><code>src/scoring.py</code></a>.</p>
+      </details>
+
+      <details>
+        <summary>How is the confidence score computed?</summary>
+        <p>Server-side, deterministically, as <code>round(50 × anchor_rate + 50 × avg_self_confidence)</code>. Anchor rate is the fraction of findings whose verbatim citation is found in the source. Average self-confidence weights each finding at <code>1.0</code> for <code>high</code>, <code>0.6</code> for <code>medium</code>, <code>0.3</code> for <code>low</code> — unanchored findings are forcibly weighted at <code>low</code>. Buckets: high ≥ 80, medium ≥ 60, else low. See <a href="https://github.com/dnzengou/legal-ai-agent/blob/main/src/confidence.py" rel="noopener"><code>src/confidence.py</code></a>.</p>
+      </details>
+
+      <details>
+        <summary>Can I self-host?</summary>
+        <p>Yes. A multi-arch Docker image is published to <code>ghcr.io/dnzengou/legal-ai-agent</code> on every push to <code>main</code>. It runs on any container host — Fly.io (pre-wired via <code>fly.toml</code>), Render, Railway, ECS, Cloud Run, Kubernetes, or a Raspberry Pi. Non-root user, HEALTHCHECK on <code>/health</code>. The Dockerfile targets both ARM64 and AMD64.</p>
+      </details>
+
+      <details>
+        <summary>How is it different from ChatGPT, Claude, or Gemini directly?</summary>
+        <p>Three practical differences. First, every finding attaches a verbatim quote anchored to the source — off-the-shelf chat cannot verify its own citations against your input. Second, the safety score and confidence score are deterministic and server-computed, so they are testable offline and immune to model drift. Third, it is a single-purpose API with a strict JSON schema, not a chat, so you can wire it into pipelines without parsing prose. For a deeper honest comparison with Harvey, CoCounsel, Kira, Luminance, Spellbook, and Ironclad, see <a href="https://github.com/dnzengou/legal-ai-agent/blob/main/POSITIONING.md" rel="noopener">POSITIONING.md</a>.</p>
+      </details>
+
+      <details>
+        <summary>How do I call the API?</summary>
+        <p><code>POST /review</code> with JSON body <code>{"contract_text": "…", "jurisdiction": "optional", "party_role": "optional"}</code> and an <code>X-API-Key</code> header. For PDF, <code>POST /review-pdf</code> with <code>{"pdf_base64": "…"}</code>. The full OpenAPI 3.1 spec is published at <a href="/openapi.json"><code>/openapi.json</code></a>. A zero-dependency Python client ships in <a href="https://github.com/dnzengou/legal-ai-agent/blob/main/examples/client.py" rel="noopener"><code>examples/client.py</code></a>.</p>
+      </details>
+
+      <details>
+        <summary>Is there a rate limit?</summary>
+        <p>Yes — per-IP token-bucket limiting on <code>/review</code> and <code>/review-pdf</code>. Defaults: 30 requests per minute sustained, 60 burst. Tune via <code>RATE_LIMIT_PER_MIN</code> and <code>RATE_LIMIT_BURST</code> environment variables. <code>/health</code> and <code>/</code> are not rate-limited.</p>
+      </details>
+
+      <details>
+        <summary>How do I cite legal-ai-agent in research?</summary>
+        <p>Use the <a href="https://github.com/dnzengou/legal-ai-agent/blob/main/CITATION.cff" rel="noopener"><code>CITATION.cff</code></a> at the repository root — Citation File Format 1.2.0, compatible with Zotero, Mendeley, GitHub's citation widget, and Zenodo.</p>
+      </details>
+
+      <details>
+        <summary>Who is it for?</summary>
+        <p>Creators (musicians, artists, writers, filmmakers) reviewing licensing and commissioning. Entrepreneurs (founders) reviewing term sheets, SAFEs, and customer MSAs. Builders (engineers) reviewing terms of service, DPAs, and API contracts. Consultants reviewing SOWs. SMB owners reviewing leases and employment agreements. Operators (GMs, procurement) reviewing vendor onboarding and SLAs. Also: individuals drafting administrative appeals, including naturalization appeals to Swedish Migrationsverket.</p>
+      </details>
+    </section>
+  </main>
+
+  <footer role="contentinfo">
+    <p>Powered by Claude Opus 4.8 · Open source · <a href="https://github.com/dnzengou/legal-ai-agent/blob/main/LICENSE" rel="noopener">MIT</a> · <a href="https://github.com/dnzengou/legal-ai-agent" rel="noopener">GitHub</a></p>
+  </footer>
+</body>
+</html>

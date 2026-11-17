@@ -1,0 +1,20 @@
+/* legal-ai-agent */
+
+Project:  legal-ai-agent — first-pass contract review with provenance-anchored citations
+Site:     https://legal-ai-agent.netlify.app
+Source:   https://github.com/dnzengou/legal-ai-agent
+License:  MIT
+Powered:  Claude Opus 4.8 (Anthropic) · FastAPI · Pydantic · Uvicorn
+
+/* Standards */
+
+Accessibility: WCAG 2.2 AA
+Security:      RFC 9116 (security.txt)
+Semantics:     schema.org (JSON-LD), OpenAPI 3.1
+LLM-friendly:  llmstxt.org
+Hosting:       Fly.io (API) · Netlify (static landing)
+
+/* Thanks */
+
+To every contract that got negotiated in half the time, and every appeal that got
+drafted before the three-week deadline.

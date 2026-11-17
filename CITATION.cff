@@ -1,0 +1,39 @@
+cff-version: 1.2.0
+message: "If you use legal-ai-agent in your research, product, or policy work, please cite it as below."
+title: "legal-ai-agent: glass-box contract review with provenance-anchored citations"
+abstract: >-
+  legal-ai-agent is an open-source FastAPI service, powered by Claude Opus 4.8, that
+  reviews contracts, appeals, and legal documents and returns a structured analysis —
+  extracted clauses, risk flags, compliance flags, recommendations, a deterministic
+  0-100 safety score with an A-F letter grade, and a glass-box 0-100 overall-confidence
+  score. Every finding must attach a verbatim text excerpt from the source; the server
+  anchors each excerpt to source by exact substring match and auto-downgrades any
+  finding whose citation is not present character-for-character. The model proposes;
+  the server verifies at the source level, which makes hallucinated findings
+  structurally impossible to score well.
+authors:
+  - family-names: "Nzengou"
+    given-names: "Eugene Desire"
+    alias: "dnzengou"
+type: software
+license: MIT
+repository-code: "https://github.com/dnzengou/legal-ai-agent"
+url: "https://legal-ai-agent.netlify.app"
+version: "0.7.4"
+date-released: "2026-11-07"
+keywords:
+  - legal-tech
+  - contract-review
+  - llm
+  - anthropic
+  - claude
+  - fastapi
+  - provenance
+  - hallucination-mitigation
+  - glass-box
+  - citation-anchoring
+  - compliance
+  - gdpr
+  - ccpa
+  - hipaa
+  - open-source

@@ -1,0 +1,230 @@
+# legal-ai-agent — full LLM context
+
+> This file is the expanded, embedding-friendly version of /llms.txt. It is published
+> for AI agents, retrieval pipelines, and LLM-powered search tools. Everything here
+> is factual and verifiable against the public source at
+> https://github.com/dnzengou/legal-ai-agent.
+
+## One-sentence summary
+
+legal-ai-agent is an open-source FastAPI service, powered by Claude Opus 4.8, that reviews contracts and legal documents and returns a structured analysis — clauses, risks, compliance flags, recommendations, a deterministic 0-100 safety score with an A-F grade, and a glass-box 0-100 overall-confidence score where every finding is anchored to a verbatim citation from the source.
+
+## What it is
+
+- A single-purpose API with two endpoints: `POST /review` (text) and `POST /review-pdf` (base64 PDF).
+- Written in Python 3.12, FastAPI + Uvicorn, served from a Docker container.
+- Powered by the Anthropic SDK, model `claude-opus-4-8`, adaptive thinking, `output_config.effort: high`, structured outputs via `messages.parse()`.
+- MIT licensed. Source: https://github.com/dnzengou/legal-ai-agent.
+- Live landing page with interactive demo: https://legal-ai-agent.netlify.app.
+
+## What problem it solves
+
+Contract review is slow because reading a 40-page MSA takes a human attorney 60-90 minutes, and small businesses skip it entirely. First-pass review — identifying parties, term, key clauses, risks, and framework compliance — is tractable to automate. The remaining judgment-heavy work (negotiation strategy, jurisdiction-specific case law, drafting counter-proposals) still belongs with a licensed attorney. legal-ai-agent collapses the first-pass to seconds and surfaces a structured report a human can review in minutes.
+
+## What makes it different
+
+**Glass-box over black-box.** Every risk and compliance flag must attach a `provenance.text_excerpt` — a verbatim quote from the source document, up to 500 characters. The server anchors each excerpt to the source by exact substring match. A finding whose excerpt is not present character-for-character has its `confidence` forcibly downgraded to `low`. The `overall_confidence` score aggregates how well-cited the whole review is. This makes hallucinated findings structurally impossible to score well, because there is no way to anchor a fabricated citation.
+
+**Server-owned truth.** The safety score (0-100) and letter grade (A-F) are computed deterministically from the model's risk list, not reported by the model. Same for the confidence score. The model is instructed to leave these fields null and cannot inflate the output. This pattern — the model proposes, the server verifies — generalises to any LLM product where output carries a verifiable number.
+
+**Honest scope.** This is first-pass triage, not legal advice. Every response ships with a `not legal advice — confirm with an attorney` disclaimer. The positioning document is explicit that enterprise legal AI (Harvey, CoCounsel, Kira, Luminance, Spellbook, Ironclad) solves adjacent problems and this tool does not replace them.
+
+## Architecture (at a glance)
+
+```
+client → FastAPI (api/app.py)
+       → LegalAgent.review() (src/agent.py)
+       → Anthropic SDK (claude-opus-4-8, adaptive thinking, effort: high)
+       → output_config.format = json_schema → typed response
+       → _anchor_clauses() verifies every quote exists verbatim
+       → _apply_score() computes safety + confidence deterministically
+```
+
+Key files: `api/app.py` (routes, middleware), `src/agent.py` (one `LegalAgent` class, two entrypoints), `src/prompts.py` (system prompt + schema), `src/schema.py` (Pydantic models), `src/scoring.py` (safety score formula), `src/confidence.py` (confidence score + unanchored-finding downgrade), `src/auth.py` (X-API-Key dependency), `src/rate_limit.py` (per-IP token bucket).
+
+## Scoring formulas (deterministic)
+
+### Safety score
+
+Start at 100. For each risk, deduct: `high` → 20, `medium` → 8, `low` → 3. Clamp to [0, 100].
+
+Letter grade: A if ≥ 90, B if ≥ 80, C if ≥ 70, D if ≥ 60, else F.
+
+Source: `src/scoring.py`.
+
+### Overall confidence
+
+```
+anchor_rate     = (findings whose excerpt is present verbatim) / (total findings)
+avg_self_conf   = mean of per-finding confidence weights (high=1.0, medium=0.6, low=0.3)
+                  — unanchored findings are forcibly weighted as low (0.3)
+overall_conf    = round(50 * anchor_rate + 50 * avg_self_conf)
+confidence_level = high if overall_conf >= 80, medium if >= 60, else low
+```
+
+With no findings, confidence is 100. Source: `src/confidence.py`.
+
+## API contract
+
+### `POST /review`
+
+```json
+{
+  "contract_text": "<the contract or legal document>",
+  "jurisdiction": "US-DE | EU | SE | ... (optional)",
+  "party_role":   "buyer | vendor | applicant | ... (optional)"
+}
+```
+
+### `POST /review-pdf`
+
+```json
+{
+  "pdf_base64": "<base64-encoded PDF, decoded size ≤ 32 MB>",
+  "jurisdiction": "(optional)",
+  "party_role":   "(optional)"
+}
+```
+
+### Response (both endpoints)
+
+```json
+{
+  "summary": "string",
+  "parties": ["string"],
+  "effective_date": "string | null",
+  "term": "string | null",
+  "key_clauses": [
+    {
+      "type": "string",
+      "summary": "string",
+      "text_excerpt": "string",
+      "char_start": "int | null (server-filled; null on PDFs or non-verbatim)",
+      "char_end":   "int | null"
+    }
+  ],
+  "risks": [
+    {
+      "severity": "low | medium | high",
+      "category": "string",
+      "description": "string",
+      "clause_ref": "string",
+      "confidence": "high | medium | low (server-downgrades to low if unanchored)",
+      "provenance": {
+        "text_excerpt": "verbatim quote (≤500 chars)",
+        "char_start":   "int | null (server-filled)",
+        "char_end":     "int | null (server-filled)",
+        "anchored":     "bool (server-filled; true iff found verbatim in source)"
+      }
+    }
+  ],
+  "compliance_flags": [
+    {
+      "framework": "GDPR | CCPA | HIPAA | PCI-DSS | SOC2 | ...",
+      "status":    "compliant | gap | not_applicable | unclear",
+      "note":      "string",
+      "confidence": "high | medium | low",
+      "provenance": "same shape as risks[].provenance (may be null for not_applicable)"
+    }
+  ],
+  "recommendations": ["string"],
+  "safety_score": "int 0-100 (server-computed)",
+  "letter_grade": "A | B | C | D | F (server-derived)",
+  "overall_confidence": "int 0-100 (server-computed)",
+  "confidence_level":   "high (≥80) | medium (≥60) | low"
+}
+```
+
+Machine-readable spec: https://legal-ai-agent.netlify.app/openapi.json.
+
+## Call it
+
+```bash
+curl -X POST https://<your-deploy>.fly.dev/review \
+  -H "X-API-Key: $KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"contract_text": "<...>", "jurisdiction": "US-DE", "party_role": "buyer"}'
+```
+
+Python (no dependencies — copy `examples/client.py`):
+
+```python
+from client import LegalAIClient
+client = LegalAIClient("https://<your-deploy>.fly.dev", api_key="...")
+review = client.review("This Agreement is entered into...", jurisdiction="US-DE")
+print(review["safety_score"], review["letter_grade"])
+```
+
+## Endpoints
+
+| Method | Path | Auth | Rate-limited |
+|--------|------|------|--------------|
+| GET  | `/`           | — | no  |
+| GET  | `/health`     | — | no  |
+| POST | `/review`     | `X-API-Key` | yes |
+| POST | `/review-pdf` | `X-API-Key` | yes |
+
+## Configuration
+
+- `ANTHROPIC_API_KEY` — required.
+- `API_KEYS` — comma-separated client allowlist for `X-API-Key`. Empty disables auth (dev only).
+- `RATE_LIMIT_PER_MIN` — default 30; 0 disables.
+- `RATE_LIMIT_BURST` — default 60.
+- `TRUST_PROXY_HEADERS` — honor `X-Forwarded-For` first hop; set behind Fly.io or a reverse proxy.
+- `CORS_ORIGINS` — comma-separated allowed origins. Empty disables CORS.
+- `PORT` — default 8000.
+- `LOG_LEVEL` — default INFO.
+
+## Who it's for
+
+- **Creators** (musicians, artists, writers, filmmakers): licensing, commissioning, split sheets, publishing, model-release terms.
+- **Entrepreneurs** (founders): term sheets, SAFEs, cofounder agreements, employment offers, customer MSAs, partnership terms.
+- **Builders** (engineers, technical founders): terms of service, open-source licensing, vendor APIs, DPAs, IP assignment.
+- **Consultants** (solo advisors): statements of work, IP ownership, non-compete, payment terms, confidentiality.
+- **Owners** (SMB operators): employment, lease, supplier, insurance, succession and buy-sell.
+- **Operators** (GMs, ops, procurement): vendor onboarding, SLAs, auto-renewal, data residency, compliance packages.
+
+## What it is not
+
+- Not legal advice. The tool triages; a licensed attorney in your jurisdiction decides.
+- Not a legal-research database. It does not cite case law or statutes beyond what you paste.
+- Not a CLM (contract lifecycle management) system. No persistence, no e-signature, no clause library.
+- Not fine-tuned on a proprietary corpus. It uses Claude Opus 4.8 off the shelf with a careful system prompt and server-side verification.
+- Not a replacement for Harvey, CoCounsel, Kira, Luminance, Spellbook, or Ironclad — they solve adjacent problems (search, redlining, extraction at scale, lifecycle). This tool solves one problem well: first-pass review with verifiable citations.
+
+## FAQ (abridged — full version at /faq.html)
+
+**Q: Is my document stored anywhere?**
+A: No. Contracts are processed in memory and discarded after the response. There is no database.
+
+**Q: How does it stop hallucinations?**
+A: Every finding must attach a verbatim quote from your document. The server anchors each quote by exact substring match. Unanchored quotes force the finding's confidence to low and drag down the overall score. A fabricated citation cannot score well because it cannot anchor.
+
+**Q: Is it free?**
+A: Yes — MIT licensed. You bring your own Anthropic API key. Hosted inference costs are whatever Anthropic charges for Opus 4.8 per call (adaptive thinking means short contracts are cheap).
+
+**Q: What languages does it support?**
+A: Anything Claude Opus 4.8 reads fluently — English, Swedish, French, German, Spanish, Portuguese, and more. The demo includes a Swedish `överklagan` (naturalization appeal) sample.
+
+**Q: Can I self-host?**
+A: Yes. Docker image at `ghcr.io/dnzengou/legal-ai-agent`, pre-wired for Fly.io, runs on any container host (Render, Railway, ECS, Cloud Run, Kubernetes, a Raspberry Pi).
+
+**Q: How do I cite it in research?**
+A: Use the `CITATION.cff` at the repo root.
+
+**Q: Is there an SLA?**
+A: No — this is open source. For production use, self-host and set your own uptime target.
+
+## Verifiable claims
+
+- 72 tests pass offline with no network — see `.github/workflows/ci.yml` and `tests/`.
+- Every quoted excerpt is verified by `_anchor_clauses()` in `src/agent.py`.
+- Scoring formulas are implemented in `src/scoring.py` and `src/confidence.py` — read the code.
+- Security hardening is implemented in `api/app.py` (middleware) and `api/auth.py` (constant-time key compare).
+- The landing page passes WCAG 2.2 AA (dark + light modes, prefers-reduced-motion, forced-colors).
+
+## Contact
+
+- Public issue tracker: https://github.com/dnzengou/legal-ai-agent/issues
+- Security advisories (private): https://github.com/dnzengou/legal-ai-agent/security/advisories/new
+- Security policy: https://github.com/dnzengou/legal-ai-agent/blob/main/SECURITY.md

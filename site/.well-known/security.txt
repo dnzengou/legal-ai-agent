@@ -1,0 +1,9 @@
+# legal-ai-agent — security contact (RFC 9116)
+# Please use GitHub's private vulnerability reporting, not public issues.
+
+Contact: https://github.com/dnzengou/legal-ai-agent/security/advisories/new
+Expires: 2027-11-07T00:00:00.000Z
+Preferred-Languages: en, fr, sv
+Canonical: https://legal-ai-agent.netlify.app/.well-known/security.txt
+Policy: https://github.com/dnzengou/legal-ai-agent/blob/main/SECURITY.md
+Acknowledgments: https://github.com/dnzengou/legal-ai-agent/blob/main/SECURITY.md#acknowledgments
